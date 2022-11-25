@@ -25,6 +25,12 @@ type Portal struct {
 	ip  net.IP
 }
 
+type rsp struct {
+	Challenge string `json:"challenge"`
+	Ecode     int    `json:"ecode"`
+	Msg       string `json:"error_msg"`
+}
+
 func NewPortal(name, password string, ipv4 net.IP) (*Portal, error) {
 	if len(ipv4) != 4 {
 		return nil, ErrIllegalIPv4
@@ -47,11 +53,6 @@ func (p *Portal) GetChallenge() (string, error) {
 	}
 	if len(data) < 12 {
 		return "", ErrUnexpectedChallengeResponse
-	}
-	type rsp struct {
-		Challenge string `json:"challenge"`
-		Ecode     int    `json:"ecode"`
-		Msg       string `json:"error_msg"`
 	}
 	var r rsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
@@ -85,18 +86,15 @@ func (p *Portal) Login(challenge string) error {
 	if len(data) < 12 {
 		return ErrUnexpectedLoginResponse
 	}
-	type rsp struct {
-		Error string `json:"error"`
-	}
 	var r rsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
 	if err != nil {
 		return err
 	}
-	if r.Error == "ok" {
-		return nil
+	if r.Ecode != 0 {
+		return errors.New(r.Msg)
 	}
-	return errors.New(r.Error)
+	return nil
 }
 
 func (p *Portal) String() string {
