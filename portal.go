@@ -16,6 +16,7 @@ import (
 var (
 	ErrIllegalIPv4                 = errors.New("illegal ipv4")
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
+	ErrUnexpectedLoginResponse     = errors.New("unexpected login response")
 )
 
 type Portal struct {
@@ -82,7 +83,7 @@ func (p *Portal) Login(challenge string) error {
 		return err
 	}
 	if len(data) < 12 {
-		return ErrUnexpectedChallengeResponse
+		return ErrUnexpectedLoginResponse
 	}
 	type rsp struct {
 		Error string `json:"error"`
