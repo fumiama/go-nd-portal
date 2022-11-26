@@ -33,21 +33,25 @@ jobs:
         run: go mod tidy
 
       - name: Build linux-x64
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/go-nd-portal-linux-x64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-x64
       - name: Build linux-x86
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o artifacts/go-nd-portal-linux-x86
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-x86
       - name: Build windows-x64
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/go-nd-portal-x64.exe
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-x64.exe
       - name: Build windows-x86
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -ldflags="-s -w" -o artifacts/go-nd-portal-x86.exe
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-x86.exe
       - name: Build arm64
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build -ldflags="-s -w" -o artifacts/go-nd-portal-linux-arm64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-arm64
       - name: Build armv6
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags="-s -w" -o artifacts/go-nd-portal-linux-armv6
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-armv6
       - name: Build darwin amd64
-        run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/go-nd-portal-darwin-amd64
+        run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-darwin-amd64
       - name: Build darwin arm64
-        run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o artifacts/go-nd-portal-darwin-arm64
+        run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-darwin-arm64
+      - name: Build linux mips sf
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mips GOMIPS=softfloat go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-mips-sf
+      - name: Build linux mipsel sf
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mipsle GOMIPS=softfloat go build -ldflags="-s -w" -trimpath -o artifacts/go-nd-portal-linux-mipsel-sf
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
