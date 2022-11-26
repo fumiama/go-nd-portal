@@ -1,8 +1,6 @@
-package gondportal
+package portal
 
 import (
-	"crypto/hmac"
-	"crypto/md5"
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
@@ -10,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/fumiama/go-nd-portal/helper"
 )
 
 func TestDecodeInfo(t *testing.T) {
@@ -32,7 +32,7 @@ func TestDecodeKey(t *testing.T) {
 	challenge := "c312a4194d4310695b71d92ac3c740198a14a7a280022f89408edec4e932d1e5"
 	sc := len(challenge)
 	k := make([]uint32, sc/4)
-	token := StringToBytes(challenge)
+	token := helper.StringToBytes(challenge)
 	for i := 0; i < sc/4; i++ {
 		k[i] = binary.LittleEndian.Uint32(token[i*4 : i*4+4])
 	}
@@ -40,19 +40,21 @@ func TestDecodeKey(t *testing.T) {
 }
 
 func TestEncodeUserInfo(t *testing.T) {
-	u, err := NewPortal("2000010101001", "12345678", net.IPv4(1, 2, 3, 4).To4())
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(u.String())
-	r := EncodeUserInfo(u.String(), "c312a4194d4310695b71d92ac3c740198a14a7a280022f89408edec4e932d1e5")
-	assert.Equal(t, "LMDd8Hmfuq32k+whLiNtcuRwEVxEswfsm4rKEoAoGnFeDlMijgeXC6mtK3nTlrNmjwoEmRyLsWePyrFzDd/EI7EfgKh2gF3c9dGmUrlFO9cy6PFqBDShWsGaAuatVgZLhKBOACTShgxGraRJBoA9WS==", r)
+	r := EncodeUserInfo(u.String(), "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e")
+	assert.Equal(t, "CfVnZ9mvKmdgvm/ivovlPibZL6RLAWcx+nBTaYmWH3kmThco+eO4LVsCPFceSmM9PyI0UcMgLE7bmpfY9pr0EWnWdTncXrbW29Aydp+lw6QjxKMgNzgYd7uopiPbIyKpxvJZDHsGw5xh8rMEeq3JXrD2vex27xeI", r)
 }
 
 func TestHMd5(t *testing.T) {
-	h := hmac.New(md5.New, []byte("c312a4194d4310695b71d92ac3c740198a14a7a280022f89408edec4e932d1e5"))
-	h.Write([]byte("1234567890"))
-	assert.Equal(t, "69ff50d80e734878259dbee3322591a7", hex.EncodeToString(h.Sum(nil)))
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, "91062ae815fb02d9d15aec834aafffd4", u.PasswordHMd5("d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e"))
 }
 
 func TestSha1(t *testing.T) {
@@ -62,18 +64,19 @@ func TestSha1(t *testing.T) {
 }
 
 func TestCheckSum(t *testing.T) {
-	u, err := NewPortal("2000010101001", "1234567890", net.IPv4(1, 2, 3, 4).To4())
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(u.String())
+	challenge := "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e"
 	s := u.CheckSum(
-		"c312a4194d4310695b71d92ac3c740198a14a7a280022f89408edec4e932d1e5",
-		"69ff50d80e734878259dbee3322591a7",
+		challenge,
+		u.PasswordHMd5(challenge),
 		EncodeUserInfo(
 			u.String(),
-			"c312a4194d4310695b71d92ac3c740198a14a7a280022f89408edec4e932d1e5",
+			challenge,
 		),
 	)
-	assert.Equal(t, "3785bd1e1fa71a2b26470b5faa64aad9130ae418", s)
+	assert.Equal(t, "64e8913b6019df98e3b807343b8785856909d745", s)
 }

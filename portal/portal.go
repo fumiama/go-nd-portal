@@ -1,4 +1,4 @@
-package gondportal
+package portal
 
 import (
 	"crypto/hmac"
@@ -8,9 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"time"
 
 	"github.com/FloatTech/floatbox/web"
+	"github.com/sirupsen/logrus"
+
+	"github.com/fumiama/go-nd-portal/helper"
 )
 
 var (
@@ -27,8 +31,7 @@ type Portal struct {
 
 type rsp struct {
 	Challenge string `json:"challenge"`
-	Ecode     int    `json:"ecode"`
-	Msg       string `json:"error_msg"`
+	Error     string `json:"error"`
 }
 
 func NewPortal(name, password string, ipv4 net.IP) (*Portal, error) {
@@ -43,14 +46,13 @@ func NewPortal(name, password string, ipv4 net.IP) (*Portal, error) {
 }
 
 func (p *Portal) GetChallenge() (string, error) {
-	data, err := web.RequestDataWith(
-		web.NewDefaultClient(),
-		fmt.Sprintf(PortalGetChallenge, "gondportal", p.nam, p.ip, time.Now().UnixMilli()),
-		"GET", "", PortalHeaderUA,
-	)
+	u := fmt.Sprintf(PortalGetChallenge, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
+	logrus.Debugln("GET", u)
+	data, err := web.RequestDataWith(web.NewDefaultClient(), u, "GET", "", PortalHeaderUA)
 	if err != nil {
 		return "", err
 	}
+	logrus.Debugln("get challenge resp:", helper.BytesToString(data))
 	if len(data) < 12 {
 		return "", ErrUnexpectedChallengeResponse
 	}
@@ -59,30 +61,30 @@ func (p *Portal) GetChallenge() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if r.Ecode != 0 {
-		return "", errors.New(r.Msg)
+	if r.Error != "ok" {
+		return "", errors.New(r.Error)
 	}
+	logrus.Debugln("get challenge:", r.Challenge)
 	return r.Challenge, nil
 }
 
 func (p *Portal) PasswordHMd5(challenge string) string {
 	var buf [16]byte
-	h := hmac.New(md5.New, StringToBytes(challenge))
-	_, _ = h.Write(StringToBytes(p.pwd))
+	h := hmac.New(md5.New, helper.StringToBytes(challenge))
+	_, _ = h.Write(helper.StringToBytes(p.pwd))
 	return hex.EncodeToString(h.Sum(buf[:0]))
 }
 
 func (p *Portal) Login(challenge string) error {
 	info := EncodeUserInfo(p.String(), challenge)
 	hmd5 := p.PasswordHMd5(challenge)
-	data, err := web.RequestDataWith(
-		web.NewDefaultClient(),
-		fmt.Sprintf(PortalLogin, "gondportal", p.nam, hmd5, p.ip, p.CheckSum(challenge, hmd5, info), info, time.Now().UnixMilli()),
-		"GET", "", PortalHeaderUA,
-	)
+	u := fmt.Sprintf(PortalLogin, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
+	logrus.Debugln("GET", u)
+	data, err := web.RequestDataWith(web.NewDefaultClient(), u, "GET", "", PortalHeaderUA)
 	if err != nil {
 		return err
 	}
+	logrus.Debugln("get login resp:", helper.BytesToString(data))
 	if len(data) < 12 {
 		return ErrUnexpectedLoginResponse
 	}
@@ -91,8 +93,9 @@ func (p *Portal) Login(challenge string) error {
 	if err != nil {
 		return err
 	}
-	if r.Ecode != 0 {
-		return errors.New(r.Msg)
+	logrus.Debugln("login rsp:", &r)
+	if r.Error != "ok" {
+		return errors.New(r.Error)
 	}
 	return nil
 }
