@@ -12,8 +12,14 @@ $ go install github.com/fumiama/go-nd-portal@latest
 
 ## 使用方法
 
+> 也可不带参数运行，会在启动时询问参数
+
 ```bash
 ./go-nd-portal -n 20xxxxxxxxxxx -p password
 ```
 默认值：
  * `ip`: 本机公网出口，可自定义
+
+## 效果
+
+<img alt="screenshot" src="https://user-images.githubusercontent.com/41315874/204081015-7d696ae0-891b-43af-b862-b696186d9c3a.png">
