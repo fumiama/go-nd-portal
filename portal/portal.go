@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/FloatTech/floatbox/web"
 	"github.com/sirupsen/logrus"
 
 	"github.com/fumiama/go-nd-portal/helper"
@@ -48,7 +47,7 @@ func NewPortal(name, password string, ipv4 net.IP) (*Portal, error) {
 func (p *Portal) GetChallenge() (string, error) {
 	u := fmt.Sprintf(PortalGetChallenge, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
-	data, err := web.RequestDataWith(web.NewDefaultClient(), u, "GET", "", PortalHeaderUA)
+	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +79,7 @@ func (p *Portal) Login(challenge string) error {
 	hmd5 := p.PasswordHMd5(challenge)
 	u := fmt.Sprintf(PortalLogin, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
-	data, err := web.RequestDataWith(web.NewDefaultClient(), u, "GET", "", PortalHeaderUA)
+	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {
 		return err
 	}
