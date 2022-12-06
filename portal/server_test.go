@@ -71,6 +71,7 @@ func TestCheckSum(t *testing.T) {
 	t.Log(u.String())
 	challenge := "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e"
 	s := u.CheckSum(
+		PortalDomain,
 		challenge,
 		u.PasswordHMd5(challenge),
 		EncodeUserInfo(

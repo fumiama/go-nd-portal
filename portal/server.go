@@ -10,10 +10,13 @@ import (
 )
 
 const (
-	PortalServerIP     = "10.253.0.237"
-	PortalDomain       = "@dx-uestc"
-	PortalGetChallenge = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomain + "&ip=%v&_=%d"
-	PortalLogin        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomain + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	PortalServerIP       = "10.253.0.237"
+	PortalDomain         = "@dx-uestc"
+	PortalDomainDX       = "@dx"
+	PortalGetChallenge   = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomain + "&ip=%v&_=%d"
+	PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
+	PortalLogin          = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomain + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	PortalLoginDX        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomainDX + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
 
 const (
@@ -21,7 +24,8 @@ const (
 )
 
 const (
-	PortalUserInfo = `{"username":"%s` + PortalDomain + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
+	PortalUserInfo   = `{"username":"%s` + PortalDomain + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
+	PortalUserInfoDX = `{"username":"%s` + PortalDomainDX + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
 )
 
 func EncodeUserInfo(info, challenge string) string {
@@ -76,12 +80,12 @@ func EncodeUserInfo(info, challenge string) string {
 	return base64.Base64Encoding.EncodeToString(lv)
 }
 
-func (p *Portal) CheckSum(challenge, hmd5, info string) string {
+func (p *Portal) CheckSum(domain, challenge, hmd5, info string) string {
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(p.nam))
-	_, _ = h.Write([]byte(PortalDomain))
+	_, _ = h.Write([]byte(domain))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
 	_, _ = h.Write(helper.StringToBytes(challenge))

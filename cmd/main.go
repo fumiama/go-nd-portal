@@ -7,7 +7,6 @@ import (
 	"net/netip"
 	"os"
 	"runtime"
-	"time"
 
 	"golang.org/x/term"
 
@@ -50,6 +49,7 @@ func Main() {
 	h := flag.Bool("h", false, "display this help")
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
+	x := flag.Bool("x", false, "do dx login")
 	flag.Parse()
 	if *h {
 		fmt.Println("Usage:")
@@ -96,18 +96,27 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
-	portal, err := portal.NewPortal(*n, *p, ip)
+	ptl, err := portal.NewPortal(*n, *p, ip)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	challenge, err := portal.GetChallenge()
+	u := portal.PortalGetChallenge
+	if *x {
+		u = portal.PortalGetChallengeDX
+	}
+	challenge, err := ptl.GetChallenge(u)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	time.Sleep(time.Second + time.Duration(time.Now().Unix()%1000)*time.Millisecond)
-	err = portal.Login(challenge)
+	u = portal.PortalLogin
+	dm := portal.PortalDomain
+	if *x {
+		u = portal.PortalLoginDX
+		dm = portal.PortalDomainDX
+	}
+	err = ptl.Login(u, dm, challenge)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
