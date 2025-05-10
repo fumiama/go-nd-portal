@@ -49,7 +49,8 @@ func Main() {
 	h := flag.Bool("h", false, "display this help")
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
-	x := flag.Bool("x", false, "do dx login")
+	s := flag.String("s", "10.253.0.237", "login host")
+	t := flag.String("t", "qsh-edu", "login type [qsh-edu | qsh-dx | qshd-dx | qshd-cmcc]")
 	flag.Parse()
 	if *h {
 		fmt.Println("Usage:")
@@ -96,27 +97,60 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
+
+	// construct Portal, no need to do invasive modification
+	// n : username 
+	// p: password 
+	// ip : public ip
 	ptl, err := portal.NewPortal(*n, *p, ip)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	u := portal.PortalGetChallenge
-	if *x {
-		u = portal.PortalGetChallengeDX
+	if *s != portal.PortalServerIP {
+		// just valid IP here, 
+		// dont convert to net.IP because we need only its string later
+		_, err := netip.ParseAddr(*s)
+		if err != nil {
+			logrus.Errorln(err)
+			os.Exit(line())
+		}
 	}
-	challenge, err := ptl.GetChallenge(u)
+	// define ac_id
+	var ac_id string
+	switch *t {
+		case "qsh-edu":
+			// qsh-edu is assumed that cant login from dorm
+			*t = portal.PortalDomain
+			ac_id = portal.AC_ID
+		case "qsh-dx":
+			*t = portal.PortalDomainDX
+			ac_id = portal.AC_ID
+		case "qshd-dx":
+			*t = portal.PortalDomainDX
+			ac_id = portal.AC_ID_DORM
+		case "qshd-cmcc":
+			*t = portal.PortalDomainCMCC
+			ac_id = portal.AC_ID_DORM
+		default:
+			logrus.Errorln("Illegal login type:", *t)
+			os.Exit(line())
+	}
+	logrus.Debugln(fmt.Sprintf("server addr: %s, portal domain: %s, ac_id: %s", *s, *t, ac_id))
+	// input:
+	// server IP
+	// PortalDomain, determined by flag
+	challenge, err := ptl.GetChallenge(*s, *t)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	u = portal.PortalLogin
-	dm := portal.PortalDomain
-	if *x {
-		u = portal.PortalLoginDX
-		dm = portal.PortalDomainDX
-	}
-	err = ptl.Login(u, dm, challenge)
+	// input: 
+	// server IP
+	// PortalDomain, determined by flag
+	// ac_id, determined by flag
+	// challenge
+	err = ptl.Login(*s, *t, ac_id, challenge)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())

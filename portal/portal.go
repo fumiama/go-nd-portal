@@ -44,8 +44,14 @@ func NewPortal(name, password string, ipv4 net.IP) (*Portal, error) {
 	}, nil
 }
 
-func (p *Portal) GetChallenge(u string) (string, error) {
-	u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
+// input:
+// server IP
+// PortalDomain, determined by flag
+func (p *Portal) GetChallenge(sIP, domain string) (string, error) {
+	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
+	// 5.client IP 6.timestamp
+	u := GetChallengeURL(sIP, "gondportal", url.QueryEscape(p.nam), domain, p.ip, time.Now().UnixMilli())
+	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {
@@ -73,11 +79,26 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 	_, _ = h.Write(helper.StringToBytes(p.pwd))
 	return hex.EncodeToString(h.Sum(buf[:0]))
 }
-
-func (p *Portal) Login(u, domain, challenge string) error {
-	info := EncodeUserInfo(p.String(), challenge)
+// input: 
+// server IP
+// PortalDomain, determined by login type
+// ac_id, determined by login type
+// challenge
+func (p *Portal) Login(sIP, domain, ac_id, challenge string) error {
+	// 1. username 2.PortalDomain 3. client IP 4. ac_id
+	userInfo := GetPortalUserInfo(p.nam, domain, p.pwd, p.ip, ac_id)
+	info := EncodeUserInfo(userInfo, challenge)
+	// info := EncodeUserInfo(p.String(), challenge)
 	hmd5 := p.PasswordHMd5(challenge)
-	u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(domain, challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
+	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
+	// 5.encoded password 
+	// 6.ac_id: determined by login type
+	// 7.client IP
+	// 8.checksum
+	// 9.info
+	// 10.timestamp
+	u := GetLoginURL(sIP, "gondportal", url.QueryEscape(p.nam), domain, hmd5, ac_id, p.ip, p.CheckSum(domain, challenge, hmd5, ac_id, info), url.QueryEscape(info), time.Now().UnixMilli())
+	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(domain, challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {

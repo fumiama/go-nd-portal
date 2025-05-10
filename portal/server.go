@@ -4,29 +4,112 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
+	"net"
 
 	"github.com/fumiama/go-nd-portal/base64"
 	"github.com/fumiama/go-nd-portal/helper"
 )
 
 const (
+	// Default PortalServerIP String
 	PortalServerIP       = "10.253.0.237"
+	PortalServerIPDorm   = "10.253.0.235"
 	PortalDomain         = "@dx-uestc"
 	PortalDomainDX       = "@dx"
-	PortalGetChallenge   = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomain + "&ip=%v&_=%d"
-	PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
-	PortalLogin          = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomain + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
-	PortalLoginDX        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomainDX + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	PortalDomainCMCC     = "@cmcc"
+
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain 
+	// 5.client IP
+	// 6.timestamp
+	PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
+	// PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
+	
+	// ac_id for different area
+	AC_ID         		 = "1"
+	AC_ID_DORM			 = "3"
+	// qsh LoginURL key-value order
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain 
+	// 5.encoded password
+	// 6.ac_id: determined by login area
+	// 7.client IP
+	// 8.checksum
+	// 9.info
+	// 10.timestamp
+	PortalLogin          = "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	// PortalLoginDX        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomainDX + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
+
+// GetChallengeURL generates the URL for getchallenge req
+func GetChallengeURL(sIP,
+	callback, username, domain string,
+	cIP net.IP, timestamp int64) string {
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain
+	// 5.client IP
+	// 6.timestamp
+	return fmt.Sprintf(PortalGetChallenge, 
+		sIP, 
+		callback, 
+		username, domain, 
+		cIP, 
+		timestamp)
+}
+
+// LoginURL generates the URL for login req
+func GetLoginURL(sIP,
+	callback, 
+	username, domain, 
+	md5Password,
+	ac_id string,
+	cIP net.IP,
+	chksum,
+	info string, 
+	timestamp int64) string {
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain 
+	// 5.encoded password 
+	// 6.ac_id: determined by login area
+	// 7.client IP
+	// 8.checksum
+	// 9.info
+	// 10.timestamp
+	return fmt.Sprintf(PortalLogin,
+		sIP, 
+		callback, 
+		username, domain,
+		md5Password,
+		ac_id,
+		cIP, 
+		chksum, 
+		info, 
+		timestamp)
+}
 
 const (
 	PortalHeaderUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.56"
 )
 
 const (
-	PortalUserInfo   = `{"username":"%s` + PortalDomain + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
-	PortalUserInfoDX = `{"username":"%s` + PortalDomainDX + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
+	// 1.username 2.PortalDomain 3.password 4.client IP 5. ac_id
+	PortalUserInfo   = `{"username":"%s%s","password":"%s","ip":"%v","acid":"%s","enc_ver":"srun_bx1"}`
+	// PortalUserInfoDX = `{"username":"%s` + PortalDomainDX + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
 )
+
+// GetPortalUserInfo generates the UserInfo JSON for EncodeUserInfo
+func GetPortalUserInfo(username, pdomain, password string,
+	cIP net.IP,
+	ac_id string) string{
+	// 1. username 2.PortalDomain 3.password 4. client IP 5. ac_id
+	return fmt.Sprintf(PortalUserInfo,
+		username, pdomain, password, cIP, ac_id)
+}
 
 func EncodeUserInfo(info, challenge string) string {
 	if len(info) == 0 || len(challenge) == 0 || len(challenge)%4 != 0 {
@@ -80,7 +163,7 @@ func EncodeUserInfo(info, challenge string) string {
 	return base64.Base64Encoding.EncodeToString(lv)
 }
 
-func (p *Portal) CheckSum(domain, challenge, hmd5, info string) string {
+func (p *Portal) CheckSum(domain, challenge, hmd5, ac_id, info string) string {
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
@@ -89,7 +172,7 @@ func (p *Portal) CheckSum(domain, challenge, hmd5, info string) string {
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write([]byte("1")) // ac_id
+	_, _ = h.Write([]byte(ac_id)) // ac_id
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(p.ip.String()))
 	_, _ = h.Write(helper.StringToBytes(challenge))
