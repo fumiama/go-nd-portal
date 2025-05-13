@@ -49,7 +49,7 @@ func Main() {
 	h := flag.Bool("h", false, "display this help")
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
-	s := flag.String("s", "10.253.0.237", "login host")
+	s := flag.String("s", portal.PortalServerIP, "login host")
 	t := flag.String("t", "qsh-edu", "login type [qsh-edu | qsh-dx | qshd-dx | qshd-cmcc]")
 	flag.Parse()
 	if *h {
@@ -98,11 +98,11 @@ func Main() {
 		fmt.Println()
 	}
 
-	// construct Portal, no need to do invasive modification
 	// n : username 
 	// p: password 
 	// ip : public ip
-	ptl, err := portal.NewPortal(*n, *p, ip)
+	// *t : login type
+	ptl, err := portal.NewPortal(*n, *p, ip, *t)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
@@ -116,41 +116,18 @@ func Main() {
 			os.Exit(line())
 		}
 	}
-	// define ac_id
-	var ac_id string
-	switch *t {
-		case "qsh-edu":
-			// qsh-edu is assumed that cant login from dorm
-			*t = portal.PortalDomain
-			ac_id = portal.AC_ID
-		case "qsh-dx":
-			*t = portal.PortalDomainDX
-			ac_id = portal.AC_ID
-		case "qshd-dx":
-			*t = portal.PortalDomainDX
-			ac_id = portal.AC_ID_DORM
-		case "qshd-cmcc":
-			*t = portal.PortalDomainCMCC
-			ac_id = portal.AC_ID_DORM
-		default:
-			logrus.Errorln("Illegal login type:", *t)
-			os.Exit(line())
-	}
-	logrus.Debugln(fmt.Sprintf("server addr: %s, portal domain: %s, ac_id: %s", *s, *t, ac_id))
+	logrus.Debugln(fmt.Sprintf("server addr: %s, auth type: %s", *s, *t))
 	// input:
 	// server IP
-	// PortalDomain, determined by flag
-	challenge, err := ptl.GetChallenge(*s, *t)
+	challenge, err := ptl.GetChallenge(*s)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
 	// input: 
 	// server IP
-	// PortalDomain, determined by flag
-	// ac_id, determined by flag
 	// challenge
-	err = ptl.Login(*s, *t, ac_id, challenge)
+	err = ptl.Login(*s, challenge)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())

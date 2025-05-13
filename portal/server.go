@@ -28,8 +28,8 @@ const (
 	// PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
 	
 	// ac_id for different area
-	AC_ID         		 = "1"
-	AC_ID_DORM			 = "3"
+	AcId         		 = "1"
+	AcIdDorm			 = "3"
 	// qsh LoginURL key-value order
 	// 1.server IP 
 	// 2.callback 
@@ -163,7 +163,7 @@ func EncodeUserInfo(info, challenge string) string {
 	return base64.Base64Encoding.EncodeToString(lv)
 }
 
-func (p *Portal) CheckSum(domain, challenge, hmd5, ac_id, info string) string {
+func (p *Portal) CheckSum(domain, challenge, hmd5, acid, info string) string {
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
@@ -172,7 +172,7 @@ func (p *Portal) CheckSum(domain, challenge, hmd5, ac_id, info string) string {
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write([]byte(ac_id)) // ac_id
+	_, _ = h.Write([]byte(acid)) // acid
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(p.ip.String()))
 	_, _ = h.Write(helper.StringToBytes(challenge))
