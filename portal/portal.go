@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"time"
@@ -58,6 +59,7 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 		default:
 			return nil, ErrIllegalLoginType
 	}
+	logrus.Debugln(fmt.Sprintf("portal domain: %s, ac_id: %s", domain, acid))
 	return &Portal{
 		nam: name,
 		pwd: password,
