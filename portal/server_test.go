@@ -12,6 +12,19 @@ import (
 	"github.com/fumiama/go-nd-portal/helper"
 )
 
+func TestGetUserInfo(t *testing.T) {
+	u, err := NewPortal("2000010101001", "12345678", net.IPv4(1, 2, 3, 4).To4(),"qsh-edu")
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := GetUserInfo(u.nam, u.domain, u.pwd, u.ip, u.acid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(info)
+	assert.Equal(t, `{"username":"2000010101001@dx-uestc","password":"12345678","ip":"1.2.3.4","acid":"1","enc_ver":"srun_bx1"}`, info)
+}
+
 func TestDecodeInfo(t *testing.T) {
 	info := `{"username":"2000010101001@dx-uestc","password":"12345678","ip":"1.2.3.4","acid":"1","enc_ver":"srun_bx1"}`
 	sc := len(info)
@@ -40,17 +53,21 @@ func TestDecodeKey(t *testing.T) {
 }
 
 func TestEncodeUserInfo(t *testing.T) {
-	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4(),"qsh-edu")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(u.String())
-	r := EncodeUserInfo(u.String(), "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e")
+	info, err := GetUserInfo(u.nam, u.domain, u.pwd, u.ip, u.acid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(info)
+	r := EncodeUserInfo(info, "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e")
 	assert.Equal(t, "CfVnZ9mvKmdgvm/ivovlPibZL6RLAWcx+nBTaYmWH3kmThco+eO4LVsCPFceSmM9PyI0UcMgLE7bmpfY9pr0EWnWdTncXrbW29Aydp+lw6QjxKMgNzgYd7uopiPbIyKpxvJZDHsGw5xh8rMEeq3JXrD2vex27xeI", r)
 }
 
 func TestHMd5(t *testing.T) {
-	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4(),"qsh-edu")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,18 +81,23 @@ func TestSha1(t *testing.T) {
 }
 
 func TestCheckSum(t *testing.T) {
-	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4())
+	u, err := NewPortal("2001010101001", "1234567890", net.IPv4(113, 54, 148, 243).To4(),"qsh-edu")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(u.String())
+	info, err := GetUserInfo(u.nam, u.domain, u.pwd, u.ip, u.acid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(info)
 	challenge := "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e"
 	s := u.CheckSum(
 		PortalDomain,
 		challenge,
 		u.PasswordHMd5(challenge),
+		u.acid,
 		EncodeUserInfo(
-			u.String(),
+			info,
 			challenge,
 		),
 	)

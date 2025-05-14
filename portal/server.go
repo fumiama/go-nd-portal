@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -96,19 +97,29 @@ const (
 	PortalHeaderUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.56"
 )
 
-const (
-	// 1.username 2.PortalDomain 3.password 4.client IP 5. ac_id
-	PortalUserInfo   = `{"username":"%s%s","password":"%s","ip":"%v","acid":"%s","enc_ver":"srun_bx1"}`
-	// PortalUserInfoDX = `{"username":"%s` + PortalDomainDX + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
-)
+type UserInfo struct {
+	Username string `json:"username"` // = username + PortalDomain
+	Password string `json:"password"`
+	IP       string `json:"ip"`
+	AcID     string `json:"acid"`
+	EncVer   string `json:"enc_ver"`
+}
 
-// GetPortalUserInfo generates the UserInfo JSON for EncodeUserInfo
-func GetPortalUserInfo(username, pdomain, password string,
-	cIP net.IP,
-	ac_id string) string{
-	// 1. username 2.PortalDomain 3.password 4. client IP 5. ac_id
-	return fmt.Sprintf(PortalUserInfo,
-		username, pdomain, password, cIP, ac_id)
+func GetUserInfo(username, portalDomain, password string, ip net.IP, acid string) (string, error) {
+	uinfo := UserInfo{
+		Username: username + portalDomain,
+		Password: password,
+		IP:       ip.String(),
+		AcID:     acid,
+		EncVer:   "srun_bx1",
+	}
+	
+	b, err := json.Marshal(uinfo)
+	if err != nil {
+		return "", err
+	}
+	
+	return string(b), nil
 }
 
 func EncodeUserInfo(info, challenge string) string {

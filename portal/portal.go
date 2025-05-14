@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/url"
 	"time"
@@ -59,7 +58,6 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 		default:
 			return nil, ErrIllegalLoginType
 	}
-
 	return &Portal{
 		nam: name,
 		pwd: password,
@@ -109,7 +107,10 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 // challenge
 func (p *Portal) Login(sIP, challenge string) error {
 	// 1. username 2.PortalDomain 3. client IP 4. ac_id
-	userInfo := GetPortalUserInfo(p.nam, p.domain, p.pwd, p.ip, p.acid)
+	userInfo, err := GetUserInfo(p.nam, p.domain, p.pwd, p.ip, p.acid)
+	if err != nil {
+		return err
+	}
 	info := EncodeUserInfo(userInfo, challenge)
 	// info := EncodeUserInfo(p.String(), challenge)
 	hmd5 := p.PasswordHMd5(challenge)
@@ -141,8 +142,4 @@ func (p *Portal) Login(sIP, challenge string) error {
 		return errors.New(r.Error)
 	}
 	return nil
-}
-
-func (p *Portal) String() string {
-	return fmt.Sprintf(PortalUserInfo, p.nam, p.pwd, p.ip)
 }
