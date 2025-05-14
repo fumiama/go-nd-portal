@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/google/go-querystring/query"
+
 	"github.com/fumiama/go-nd-portal/base64"
 	"github.com/fumiama/go-nd-portal/helper"
 )
@@ -25,9 +27,9 @@ const (
 	// 3.username 4.PortalDomain 
 	// 5.client IP
 	// 6.timestamp
-	PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
-	// PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
-	
+	PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?%s"
+	// PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
+
 	// ac_id for different area
 	AcId         		 = "1"
 	AcIdDorm			 = "3"
@@ -41,25 +43,55 @@ const (
 	// 8.checksum
 	// 9.info
 	// 10.timestamp
-	PortalLogin          = "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
-	// PortalLoginDX        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomainDX + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	PortalLogin          = "http://%v/cgi-bin/srun_portal?%s"
+	// PortalLogin          = "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
+
+type GetChallengeReq struct {
+	Callback string `url:"callback"`
+	Username string `url:"username"`
+	IP string `url:"ip"`
+	Timestamp int64 `url:"_"`
+}
+
+type GetLoginReq struct {
+	Callback string `url:"callback"`
+	Action string `url:"action"`
+	Username string `url:"username"`
+	EncodedPassword string `url:"password"`
+	AcID string `url:"ac_id"`
+	IP string `url:"ip"`
+	Checksum string `url:"chksum"`
+	EncodedUserInfo string `url:"info"`
+	ConstantN string `url:"n"`
+	ConstantType string `url:"type"`
+	OS string `url:"os"`
+	Platform string `url:"name"`
+	DoubleStack string `url:"double_stack"`
+	Timestamp int64 `url:"_"`
+}
+
 
 // GetChallengeURL generates the URL for getchallenge req
 func GetChallengeURL(sIP,
-	callback, username, domain string,
-	cIP net.IP, timestamp int64) string {
-	// 1.server IP 
-	// 2.callback 
-	// 3.username 4.PortalDomain
-	// 5.client IP
-	// 6.timestamp
-	return fmt.Sprintf(PortalGetChallenge, 
-		sIP, 
-		callback, 
-		username, domain, 
-		cIP, 
-		timestamp)
+	callback, 
+	username, domain string,
+	cIP net.IP, 
+	timestamp int64) (string, error) {
+
+	req := GetChallengeReq{
+		Callback: callback,
+		Username: username + domain,
+		IP: cIP.String(),
+		Timestamp: timestamp,
+	}
+	v, err := query.Values(req)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf(PortalGetChallenge, sIP, v.Encode())
+	return url, nil
 }
 
 // LoginURL generates the URL for login req
@@ -67,30 +99,36 @@ func GetLoginURL(sIP,
 	callback, 
 	username, domain, 
 	md5Password,
-	ac_id string,
+	acid string,
 	cIP net.IP,
 	chksum,
 	info string, 
-	timestamp int64) string {
-	// 1.server IP 
-	// 2.callback 
-	// 3.username 4.PortalDomain 
-	// 5.encoded password 
-	// 6.ac_id: determined by login area
-	// 7.client IP
-	// 8.checksum
-	// 9.info
-	// 10.timestamp
-	return fmt.Sprintf(PortalLogin,
-		sIP, 
-		callback, 
-		username, domain,
-		md5Password,
-		ac_id,
-		cIP, 
-		chksum, 
-		info, 
-		timestamp)
+	timestamp int64) (string, error) {
+		
+	req := GetLoginReq{
+		Callback: callback,
+		Action: "login",
+		Username: username + domain,
+		EncodedPassword: "{MD5}" + md5Password,
+		AcID: acid,
+		IP: cIP.String(),
+		Checksum: chksum,
+		EncodedUserInfo: "{SRBX1}" + info,
+		ConstantN: "200",
+		ConstantType: "1",
+		OS: "Windows 10",
+		Platform: "Windows",
+		DoubleStack: "0",
+		Timestamp: timestamp,
+	}
+
+	v, err := query.Values(req)
+	if err != nil {
+		return "", err
+	}
+	url := fmt.Sprintf(PortalLogin, sIP, v.Encode())
+
+	return url, nil
 }
 
 const (

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -74,7 +73,11 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 func (p *Portal) GetChallenge(sIP string) (string, error) {
 	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
 	// 5.client IP 6.timestamp
-	u := GetChallengeURL(sIP, "gondportal", url.QueryEscape(p.nam), p.domain, p.ip, time.Now().UnixMilli())
+	// Note: no need to do URL encoding here
+	u, err := GetChallengeURL(sIP, "gondportal", p.nam, p.domain, p.ip, time.Now().UnixMilli())
+	if err != nil {
+		return "", err
+	}
 	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)
@@ -123,7 +126,11 @@ func (p *Portal) Login(sIP, challenge string) error {
 	// 8.checksum
 	// 9.info
 	// 10.timestamp
-	u := GetLoginURL(sIP, "gondportal", url.QueryEscape(p.nam), p.domain, hmd5, p.acid, p.ip, p.CheckSum(p.domain, challenge, hmd5, p.acid, info), url.QueryEscape(info), time.Now().UnixMilli())
+	// Note: no need to do URL encoding here
+	u, err := GetLoginURL(sIP, "gondportal", p.nam, p.domain, hmd5, p.acid, p.ip, p.CheckSum(p.domain, challenge, hmd5, p.acid, info), info, time.Now().UnixMilli())
+	if err != nil {
+		return err
+	}
 	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(domain, challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)

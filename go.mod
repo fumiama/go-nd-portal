@@ -3,6 +3,7 @@ module github.com/fumiama/go-nd-portal
 go 1.19
 
 require (
+	github.com/google/go-querystring v1.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/term v0.2.0
