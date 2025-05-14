@@ -97,16 +97,7 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
-
-	// n : username 
-	// p: password 
-	// ip : public ip
-	// *t : login type
-	ptl, err := portal.NewPortal(*n, *p, ip, *t)
-	if err != nil {
-		logrus.Errorln(err)
-		os.Exit(line())
-	}
+	logrus.Debugln(fmt.Sprintf("server addr: %s, auth type: %s", *s, *t))
 	if *s != portal.PortalServerIP {
 		// just valid IP here, 
 		// dont convert to net.IP because we need only its string later
@@ -116,7 +107,15 @@ func Main() {
 			os.Exit(line())
 		}
 	}
-	logrus.Debugln(fmt.Sprintf("server addr: %s, auth type: %s", *s, *t))
+	// n : username 
+	// p: password 
+	// ip : public ip
+	// *t : login type
+	ptl, err := portal.NewPortal(*n, *p, ip, *t)
+	if err != nil {
+		logrus.Errorln(err)
+		os.Exit(line())
+	}
 	// input:
 	// server IP
 	challenge, err := ptl.GetChallenge(*s)
