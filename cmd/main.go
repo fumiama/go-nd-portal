@@ -49,7 +49,7 @@ func Main() {
 	h := flag.Bool("h", false, "display this help")
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
-	s := flag.String("s", portal.PortalServerIP, "login host")
+	s := flag.String("s", portal.PortalServerIPQsh, "login host")
 	t := flag.String("t", "qsh-edu", "login type [qsh-edu | qsh-dx | qshd-dx | qshd-cmcc]")
 	flag.Parse()
 	if *h {
@@ -97,8 +97,8 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
-	logrus.Debugln(fmt.Sprintf("server addr: %s, auth type: %s", *s, *t))
-	if *s != portal.PortalServerIP {
+	logrus.Debugln(fmt.Sprintf("server addr: %s, login type: %s", *s, *t))
+	if *s != portal.PortalServerIPQsh {
 		// just valid IP here, 
 		// dont convert to net.IP because we need only its string later
 		_, err := netip.ParseAddr(*s)

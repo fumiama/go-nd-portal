@@ -23,11 +23,11 @@ var (
 )
 
 type Portal struct {
-	nam string
-	pwd string
-	ip  net.IP
-	domain string
-	acid string
+	nam		string
+	pwd		string
+	ip		net.IP
+	domain	string
+	acid	string
 }
 
 type rsp struct {
@@ -44,27 +44,27 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 	switch loginType {
 		case "qsh-edu":
 			// qsh-edu is assumed that cant login from dorm
-			domain = PortalDomain
-			acid = AcId
+			domain = PortalDomainQsh
+			acid = AcIDQsh
 		case "qsh-dx":
-			domain = PortalDomainDX
-			acid = AcId
+			domain = PortalDomainQshDX
+			acid = AcIDQsh
 		case "qshd-dx":
-			domain = PortalDomainDX
-			acid = AcIdDorm
+			domain = PortalDomainQshDX
+			acid = AcIDQshDorm
 		case "qshd-cmcc":
-			domain = PortalDomainCMCC
-			acid = AcIdDorm
+			domain = PortalDomainQshCMCC
+			acid = AcIDQshDorm
 		default:
 			return nil, ErrIllegalLoginType
 	}
 	logrus.Debugln(fmt.Sprintf("portal domain: %s, ac_id: %s", domain, acid))
 	return &Portal{
-		nam: name,
-		pwd: password,
-		ip:  ipv4,
+		nam:	name,
+		pwd:	password,
+		ip:		ipv4,
 		domain: domain,
-		acid: acid,
+		acid:	acid,
 	}, nil
 }
 
@@ -78,7 +78,6 @@ func (p *Portal) GetChallenge(sIP string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), p.ip, time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {
@@ -117,10 +116,9 @@ func (p *Portal) Login(sIP, challenge string) error {
 		return err
 	}
 	info := EncodeUserInfo(userInfo, challenge)
-	// info := EncodeUserInfo(p.String(), challenge)
 	hmd5 := p.PasswordHMd5(challenge)
 	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
-	// 5.encoded password 
+	// 5.encrypted password 
 	// 6.ac_id: determined by login type
 	// 7.client IP
 	// 8.checksum
@@ -131,7 +129,6 @@ func (p *Portal) Login(sIP, challenge string) error {
 	if err != nil {
 		return err
 	}
-	// u = fmt.Sprintf(u, "gondportal", url.QueryEscape(p.nam), hmd5, p.ip, p.CheckSum(domain, challenge, hmd5, info), url.QueryEscape(info), time.Now().UnixMilli())
 	logrus.Debugln("GET", u)
 	data, err := requestDataWith(u, "GET", PortalHeaderUA)
 	if err != nil {

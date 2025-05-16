@@ -16,59 +16,60 @@ import (
 
 const (
 	// Default PortalServerIP String
-	PortalServerIP       = "10.253.0.237"
-	PortalServerIPDorm   = "10.253.0.235"
-	PortalDomain         = "@dx-uestc"
-	PortalDomainDX       = "@dx"
-	PortalDomainCMCC     = "@cmcc"
+	PortalServerIPQsh		= "10.253.0.237"
+	PortalServerIPQshDorm	= "10.253.0.235"
+	PortalDomainQsh			= "@dx-uestc"
+	PortalDomainQshDX		= "@dx"
+	PortalDomainQshCMCC		= "@cmcc"
 
 	// 1.server IP 
 	// 2.callback 
 	// 3.username 4.PortalDomain 
 	// 5.client IP
 	// 6.timestamp
-	PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?%s"
-	// PortalGetChallenge   = "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
+	PortalGetChallenge		= "http://%v/cgi-bin/get_challenge?%s"
+	// PortalGetChallenge	= "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
 
 	// ac_id for different area
-	AcId         		 = "1"
-	AcIdDorm			 = "3"
+	AcIDQsh					= "1"
+	AcIDQshDorm				= "3"
+
+	PortalCGI				= "http://%v/cgi-bin/srun_portal?%s"
 	// qsh LoginURL key-value order
 	// 1.server IP 
 	// 2.callback 
 	// 3.username 4.PortalDomain 
-	// 5.encoded password
+	// 5.encrypted password
 	// 6.ac_id: determined by login area
 	// 7.client IP
 	// 8.checksum
 	// 9.info
 	// 10.timestamp
-	PortalLogin          = "http://%v/cgi-bin/srun_portal?%s"
-	// PortalLogin          = "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	// PortalLogin			= "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
 
 type GetChallengeReq struct {
-	Callback string `url:"callback"`
-	Username string `url:"username"`
-	IP string `url:"ip"`
-	Timestamp int64 `url:"_"`
+	Callback	string	`url:"callback"`
+	Username	string	`url:"username"`
+	IP			string	`url:"ip"`
+	Timestamp	int64	`url:"_"`
 }
 
-type GetLoginReq struct {
-	Callback string `url:"callback"`
-	Action string `url:"action"`
-	Username string `url:"username"`
-	EncodedPassword string `url:"password"`
-	AcID string `url:"ac_id"`
-	IP string `url:"ip"`
-	Checksum string `url:"chksum"`
-	EncodedUserInfo string `url:"info"`
-	ConstantN string `url:"n"`
-	ConstantType string `url:"type"`
-	OS string `url:"os"`
-	Platform string `url:"name"`
-	DoubleStack string `url:"double_stack"`
-	Timestamp int64 `url:"_"`
+type GetPortalReq struct {
+	Callback			string	`url:"callback"`
+	Action				string	`url:"action"`
+	Username			string	`url:"username"`
+	EncryptedPassword	string	`url:"password"`
+	AcID				string	`url:"ac_id"`
+	IP					string	`url:"ip"`
+	Checksum			string	`url:"chksum"`
+	EncodedUserInfo		string	`url:"info"`
+	ConstantN			string	`url:"n"`
+	ConstantType		string	`url:"type"`
+	OS					string	`url:"os"`
+	Platform			string	`url:"name"`
+	DoubleStack			string	`url:"double_stack"`
+	Timestamp			int64	`url:"_"`
 }
 
 
@@ -80,10 +81,10 @@ func GetChallengeURL(sIP,
 	timestamp int64) (string, error) {
 
 	req := GetChallengeReq{
-		Callback: callback,
-		Username: username + domain,
-		IP: cIP.String(),
-		Timestamp: timestamp,
+		Callback:	callback,
+		Username:	username + domain,
+		IP:			cIP.String(),
+		Timestamp:	timestamp,
 	}
 	v, err := query.Values(req)
 	if err != nil {
@@ -105,28 +106,28 @@ func GetLoginURL(sIP,
 	info string, 
 	timestamp int64) (string, error) {
 		
-	req := GetLoginReq{
-		Callback: callback,
-		Action: "login",
-		Username: username + domain,
-		EncodedPassword: "{MD5}" + md5Password,
-		AcID: acid,
-		IP: cIP.String(),
-		Checksum: chksum,
-		EncodedUserInfo: "{SRBX1}" + info,
-		ConstantN: "200",
-		ConstantType: "1",
-		OS: "Windows 10",
-		Platform: "Windows",
-		DoubleStack: "0",
-		Timestamp: timestamp,
+	req := GetPortalReq{
+		Callback:			callback,
+		Action:				"login",
+		Username:			username + domain,
+		EncryptedPassword:	"{MD5}" + md5Password,
+		AcID:				acid,
+		IP:					cIP.String(),
+		Checksum:			chksum,
+		EncodedUserInfo:	"{SRBX1}" + info,
+		ConstantN:			"200",
+		ConstantType:		"1",
+		OS:					"Windows 10",
+		Platform:			"Windows",
+		DoubleStack:		"0",
+		Timestamp:			timestamp,
 	}
 
 	v, err := query.Values(req)
 	if err != nil {
 		return "", err
 	}
-	url := fmt.Sprintf(PortalLogin, sIP, v.Encode())
+	url := fmt.Sprintf(PortalCGI, sIP, v.Encode())
 
 	return url, nil
 }
@@ -136,20 +137,20 @@ const (
 )
 
 type UserInfo struct {
-	Username string `json:"username"` // = username + PortalDomain
+	Username string `json:"username"` // = username + domain
 	Password string `json:"password"`
 	IP       string `json:"ip"`
 	AcID     string `json:"acid"`
 	EncVer   string `json:"enc_ver"`
 }
 
-func GetUserInfo(username, portalDomain, password string, ip net.IP, acid string) (string, error) {
+func GetUserInfo(username, domain, password string, ip net.IP, acid string) (string, error) {
 	uinfo := UserInfo{
-		Username: username + portalDomain,
-		Password: password,
-		IP:       ip.String(),
-		AcID:     acid,
-		EncVer:   "srun_bx1",
+		Username:	username + domain,
+		Password:	password,
+		IP:			ip.String(),
+		AcID:		acid,
+		EncVer:		"srun_bx1",
 	}
 	
 	b, err := json.Marshal(uinfo)
