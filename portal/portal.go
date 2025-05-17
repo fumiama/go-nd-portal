@@ -35,6 +35,44 @@ type Portal struct {
 	acid	string
 }
 
+// LoginType defines known login types
+type LoginType string
+
+const (
+	// LoginTypeQshEdu edu in Qsh work area
+	LoginTypeQshEdu LoginType = "qsh-edu"
+	// LoginTypeQshDX dx in Qsh work area
+	LoginTypeQshDX LoginType = "qsh-dx"
+	// LoginTypeQshDormDX dx in Qsh new dorm area
+	LoginTypeQshDormDX LoginType = "qshd-dx"
+	// LoginTypeQshDormCMCC cmcc in Qsh new dorm area
+	LoginTypeQshDormCMCC LoginType = "qshd-cmcc"
+)
+
+// ToDomainAcID converts LoginType to domain and acid
+func (lt LoginType) ToDomainAcID() (string, string, error) {
+	var domain, acid string
+	switch lt {
+	case LoginTypeQshEdu:
+		// qsh-edu is assumed that cant login from dorm
+		domain = PortalDomainQsh
+		acid = AcIDQsh
+	case LoginTypeQshDX:
+		domain = PortalDomainQshDX
+		acid = AcIDQsh
+	case LoginTypeQshDormDX:
+		domain = PortalDomainQshDX
+		acid = AcIDQshDorm
+	case LoginTypeQshDormCMCC:
+		domain = PortalDomainQshCMCC
+		acid = AcIDQshDorm
+	default:
+		return "", "", ErrIllegalLoginType
+	}
+
+	return domain, acid, nil
+}
+
 // rsp struct for converting from raw response data to JSON
 type rsp struct {
 	Challenge string `json:"challenge"`
@@ -42,30 +80,17 @@ type rsp struct {
 }
 
 // NewPortal creates a new Portal instance
-func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, error) {
+func NewPortal(name, password string, ipv4 net.IP, loginType LoginType) (*Portal, error) {
 	if len(ipv4) != 4 {
 		return nil, ErrIllegalIPv4
 	}
 
-	var domain, acid string
-	switch loginType {
-		case "qsh-edu":
-			// qsh-edu is assumed that cant login from dorm
-			domain = PortalDomainQsh
-			acid = AcIDQsh
-		case "qsh-dx":
-			domain = PortalDomainQshDX
-			acid = AcIDQsh
-		case "qshd-dx":
-			domain = PortalDomainQshDX
-			acid = AcIDQshDorm
-		case "qshd-cmcc":
-			domain = PortalDomainQshCMCC
-			acid = AcIDQshDorm
-		default:
-			return nil, ErrIllegalLoginType
+	domain, acid, err := loginType.ToDomainAcID()
+	if err != nil {
+		return nil, err
 	}
 	logrus.Debugf("portal domain: %s, ac_id: %s", domain, acid)
+
 	return &Portal{
 		name:	name,
 		pswd:	password,

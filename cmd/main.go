@@ -113,7 +113,7 @@ func Main() {
 	// p: password 
 	// ip : public ip
 	// *t : login type
-	ptl, err := portal.NewPortal(*n, *p, ip, *t)
+	ptl, err := portal.NewPortal(*n, *p, ip, portal.LoginType(*t))
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
