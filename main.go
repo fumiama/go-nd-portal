@@ -1,3 +1,4 @@
+// Package main fūnctiō prīncipālis
 package main
 
 import "github.com/fumiama/go-nd-portal/cmd"

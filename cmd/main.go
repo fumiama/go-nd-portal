@@ -1,3 +1,4 @@
+// Package cmd interacts with user
 package cmd
 
 import (
@@ -35,6 +36,7 @@ func line() int {
 
 const query = "query"
 
+// Main cmd program
 func Main() {
 	ip, err := outip()
 	ipf := ""
