@@ -1,3 +1,4 @@
+// Package cmd interacts with user
 package cmd
 
 import (
