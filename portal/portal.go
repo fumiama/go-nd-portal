@@ -1,3 +1,4 @@
+// Package portal handles login process
 package portal
 
 import (
@@ -16,12 +17,17 @@ import (
 )
 
 var (
+	// ErrIllegalIPv4 is returned when an invalid IPv4 address is provided
 	ErrIllegalIPv4                 = errors.New("illegal ipv4")
+	// ErrIllegalLoginType is returned when an invalid login type is provided
 	ErrIllegalLoginType            = errors.New("illegal login type")
+	// ErrUnexpectedChallengeResponse is returned when challenge is shorter than expected
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
+	// ErrUnexpectedLoginResponse is returned when login resp is shorter than expected
 	ErrUnexpectedLoginResponse     = errors.New("unexpected login response")
 )
 
+// Portal struct for login config
 type Portal struct {
 	nam		string
 	pwd		string
@@ -30,11 +36,13 @@ type Portal struct {
 	acid	string
 }
 
+// rsp struct for converting from raw response data to JSON
 type rsp struct {
 	Challenge string `json:"challenge"`
 	Error     string `json:"error"`
 }
 
+// NewPortal creates a new Portal instance
 func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, error) {
 	if len(ipv4) != 4 {
 		return nil, ErrIllegalIPv4
@@ -68,6 +76,7 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 	}, nil
 }
 
+// GetChallenge gets token for encryption from server
 // input:
 // server IP
 func (p *Portal) GetChallenge(sIP string) (string, error) {
@@ -99,6 +108,7 @@ func (p *Portal) GetChallenge(sIP string) (string, error) {
 	return r.Challenge, nil
 }
 
+// PasswordHMd5 encrypts password with hmacmd5 algorithm
 func (p *Portal) PasswordHMd5(challenge string) string {
 	var buf [16]byte
 	h := hmac.New(md5.New, helper.StringToBytes(challenge))
@@ -106,6 +116,7 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 	return hex.EncodeToString(h.Sum(buf[:0]))
 }
 
+// Login sends login request to server
 // input: 
 // server IP
 // challenge

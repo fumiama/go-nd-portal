@@ -1,4 +1,4 @@
-// Package base64 with customized talbe
+// Package base64 with customized table
 package base64
 
 import b64 "encoding/base64"
