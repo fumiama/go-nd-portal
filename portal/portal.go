@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"time"
 
@@ -29,8 +28,8 @@ var (
 
 // Portal struct for login config
 type Portal struct {
-	nam		string
-	pwd		string
+	name	string
+	pswd	string
 	ip		net.IP
 	domain	string
 	acid	string
@@ -66,10 +65,10 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 		default:
 			return nil, ErrIllegalLoginType
 	}
-	logrus.Debugln(fmt.Sprintf("portal domain: %s, ac_id: %s", domain, acid))
+	logrus.Debugf("portal domain: %s, ac_id: %s", domain, acid)
 	return &Portal{
-		nam:	name,
-		pwd:	password,
+		name:	name,
+		pswd:	password,
 		ip:		ipv4,
 		domain: domain,
 		acid:	acid,
@@ -83,7 +82,7 @@ func (p *Portal) GetChallenge(sIP string) (string, error) {
 	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
 	// 5.client IP 6.timestamp
 	// Note: no need to do URL encoding here
-	u, err := GetChallengeURL(sIP, "gondportal", p.nam, p.domain, p.ip, time.Now().UnixMilli())
+	u, err := GetChallengeURL(sIP, "gondportal", p.name, p.domain, p.ip, time.Now().UnixMilli())
 	if err != nil {
 		return "", err
 	}
@@ -112,7 +111,7 @@ func (p *Portal) GetChallenge(sIP string) (string, error) {
 func (p *Portal) PasswordHMd5(challenge string) string {
 	var buf [16]byte
 	h := hmac.New(md5.New, helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.pwd))
+	_, _ = h.Write(helper.StringToBytes(p.pswd))
 	return hex.EncodeToString(h.Sum(buf[:0]))
 }
 
@@ -122,7 +121,7 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 // challenge
 func (p *Portal) Login(sIP, challenge string) error {
 	// 1. username 2.PortalDomain 3. client IP 4. ac_id
-	userInfo, err := GetUserInfo(p.nam, p.domain, p.pwd, p.ip, p.acid)
+	userInfo, err := GetUserInfo(p.name, p.domain, p.pswd, p.ip, p.acid)
 	if err != nil {
 		return err
 	}
@@ -136,7 +135,7 @@ func (p *Portal) Login(sIP, challenge string) error {
 	// 9.info
 	// 10.timestamp
 	// Note: no need to do URL encoding here
-	u, err := GetLoginURL(sIP, "gondportal", p.nam, p.domain, hmd5, p.acid, p.ip, p.CheckSum(p.domain, challenge, hmd5, p.acid, info), info, time.Now().UnixMilli())
+	u, err := GetLoginURL(sIP, "gondportal", p.name, p.domain, hmd5, p.acid, p.ip, p.CheckSum(p.domain, challenge, hmd5, p.acid, info), info, time.Now().UnixMilli())
 	if err != nil {
 		return err
 	}

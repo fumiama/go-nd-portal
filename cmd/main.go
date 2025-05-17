@@ -99,9 +99,9 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
-	logrus.Debugln(fmt.Sprintf("server addr: %s, login type: %s", *s, *t))
+	logrus.Debugf("server addr: %s, login type: %s", *s, *t)
 	if *s != portal.PortalServerIPQsh {
-		// just valid IP here, 
+		// just validate IP here, 
 		// dont convert to net.IP because we need only its string later
 		_, err := netip.ParseAddr(*s)
 		if err != nil {

@@ -231,7 +231,7 @@ func (p *Portal) CheckSum(domain, challenge, hmd5, acid, info string) string {
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.nam))
+	_, _ = h.Write(helper.StringToBytes(p.name))
 	_, _ = h.Write([]byte(domain))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
