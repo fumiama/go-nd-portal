@@ -79,10 +79,16 @@ func NewPortal(name, password string, ipv4 net.IP, loginType string) (*Portal, e
 // input:
 // server IP
 func (p *Portal) GetChallenge(sIP string) (string, error) {
-	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
-	// 5.client IP 6.timestamp
 	// Note: no need to do URL encoding here
-	u, err := GetChallengeURL(sIP, "gondportal", p.name, p.domain, p.ip, time.Now().UnixMilli())
+	u, err := GetChallengeURL(
+		sIP, 
+		"gondportal", 
+		p.name, 
+		p.domain, 
+		p.ip, 
+		time.Now().UnixMilli(),
+	)
+	
 	if err != nil {
 		return "", err
 	}
@@ -120,22 +126,26 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 // server IP
 // challenge
 func (p *Portal) Login(sIP, challenge string) error {
-	// 1. username 2.PortalDomain 3. client IP 4. ac_id
 	userInfo, err := GetUserInfo(p.name, p.domain, p.pswd, p.ip, p.acid)
 	if err != nil {
 		return err
 	}
 	info := EncodeUserInfo(userInfo, challenge)
 	hmd5 := p.PasswordHMd5(challenge)
-	// 1.PortalServerIP 2. callback 3.username 4.PortalDomain 
-	// 5.encrypted password 
-	// 6.ac_id: determined by login type
-	// 7.client IP
-	// 8.checksum
-	// 9.info
-	// 10.timestamp
 	// Note: no need to do URL encoding here
-	u, err := GetLoginURL(sIP, "gondportal", p.name, p.domain, hmd5, p.acid, p.ip, p.CheckSum(p.domain, challenge, hmd5, p.acid, info), info, time.Now().UnixMilli())
+	u, err := GetLoginURL(
+		sIP, 
+		"gondportal", 
+		p.name, 
+		p.domain, 
+		hmd5, 
+		p.acid, 
+		p.ip, 
+		p.CheckSum(challenge, p.name, p.domain, hmd5, p.acid, p.ip, info), 
+		info, 
+		time.Now().UnixMilli(),
+	)
+
 	if err != nil {
 		return err
 	}

@@ -83,7 +83,8 @@ type GetPortalReq struct {
 }
 
 // GetChallengeURL generates the URL for getchallenge req
-func GetChallengeURL(sIP,
+func GetChallengeURL(
+	sIP,
 	callback, 
 	username, domain string,
 	cIP net.IP, 
@@ -105,7 +106,8 @@ func GetChallengeURL(sIP,
 }
 
 // GetLoginURL generates the URL for login req
-func GetLoginURL(sIP,
+func GetLoginURL(
+	sIP,
 	callback, 
 	username, domain, 
 	md5Password,
@@ -156,11 +158,17 @@ type UserInfo struct {
 }
 
 // GetUserInfo serializes UserInfo JSON to string
-func GetUserInfo(username, domain, password string, ip net.IP, acid string) (string, error) {
+func GetUserInfo(
+	username, 
+	domain, 
+	password string, 
+	cIP net.IP, 
+	acid string) (string, error) {
+		
 	uinfo := UserInfo{
 		Username:	username + domain,
 		Password:	password,
-		IP:			ip.String(),
+		IP:			cIP.String(),
 		AcID:		acid,
 		EncVer:		"srun_bx1",
 	}
@@ -227,18 +235,26 @@ func EncodeUserInfo(info, challenge string) string {
 }
 
 // CheckSum calculates chksum parameter for login
-func (p *Portal) CheckSum(domain, challenge, hmd5, acid, info string) string {
+func (p *Portal) CheckSum(
+	challenge, 
+	username, 
+	domain, 
+	hmd5, 
+	acid string, 
+	cIP net.IP, 
+	info string) string {
+
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.name))
+	_, _ = h.Write(helper.StringToBytes(username))
 	_, _ = h.Write([]byte(domain))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write([]byte(acid)) // acid
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.ip.String()))
+	_, _ = h.Write(helper.StringToBytes(cIP.String()))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write([]byte("200")) // n
 	_, _ = h.Write(helper.StringToBytes(challenge))

@@ -92,10 +92,12 @@ func TestCheckSum(t *testing.T) {
 	t.Log(info)
 	challenge := "d26466d4036507dadb17e87e23358126e0210cb289d19151f59bcfcefdcf345e"
 	s := u.CheckSum(
-		PortalDomainQsh,
 		challenge,
+		u.name,
+		PortalDomainQsh,
 		u.PasswordHMd5(challenge),
 		u.acid,
+		u.ip,
 		EncodeUserInfo(
 			info,
 			challenge,
