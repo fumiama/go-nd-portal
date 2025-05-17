@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 
@@ -173,12 +174,16 @@ func GetUserInfo(
 		EncVer:		"srun_bx1",
 	}
 	
-	b, err := json.Marshal(uinfo)
+	var b strings.Builder 
+	err := json.NewEncoder(&b).Encode(uinfo)
+	
 	if err != nil {
 		return "", err
 	}
 	
-	return string(b), nil
+	// Note: in case of unexpected error
+	// we have to remove "\n" at the tail to match actual JSON format
+	return strings.TrimSpace(b.String()), nil
 }
 
 // EncodeUserInfo encodes userinfo with challenge
