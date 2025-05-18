@@ -91,19 +91,17 @@ func GetChallengeURL(
 	cIP net.IP, 
 	timestamp int64) (string, error) {
 
-	req := GetChallengeReq{
+	v, err := query.Values(&GetChallengeReq{
 		Callback:	callback,
 		Username:	username + domain,
 		IP:			cIP.String(),
 		Timestamp:	timestamp,
-	}
-	v, err := query.Values(req)
+	})
 	if err != nil {
 		return "", err
 	}
 
-	url := fmt.Sprintf(PortalGetChallenge, sIP, v.Encode())
-	return url, nil
+	return fmt.Sprintf(PortalGetChallenge, sIP, v.Encode()), nil
 }
 
 // GetLoginURL generates the URL for login req
@@ -117,8 +115,8 @@ func GetLoginURL(
 	chksum,
 	info string, 
 	timestamp int64) (string, error) {
-		
-	req := GetPortalReq{
+
+	v, err := query.Values(&GetPortalReq{
 		Callback:			callback,
 		Action:				"login",
 		Username:			username + domain,
@@ -133,15 +131,12 @@ func GetLoginURL(
 		Platform:			"Windows",
 		DoubleStack:		"0",
 		Timestamp:			timestamp,
-	}
-
-	v, err := query.Values(req)
+	})
 	if err != nil {
 		return "", err
 	}
-	url := fmt.Sprintf(PortalCGI, sIP, v.Encode())
 
-	return url, nil
+	return fmt.Sprintf(PortalCGI, sIP, v.Encode()), nil
 }
 
 const (
@@ -165,18 +160,15 @@ func GetUserInfo(
 	password string, 
 	cIP net.IP, 
 	acid string) (string, error) {
-		
-	uinfo := UserInfo{
+	
+	var b strings.Builder 
+	err := json.NewEncoder(&b).Encode(&UserInfo{
 		Username:	username + domain,
 		Password:	password,
 		IP:			cIP.String(),
 		AcID:		acid,
 		EncVer:		"srun_bx1",
-	}
-	
-	var b strings.Builder 
-	err := json.NewEncoder(&b).Encode(uinfo)
-	
+	})
 	if err != nil {
 		return "", err
 	}
