@@ -101,7 +101,7 @@ func Main() {
 	}
 	logrus.Debugf("server addr: %s, login type: %s", *s, *t)
 	if *s != portal.PortalServerIPQsh {
-		// just validate IP here, 
+		// just validate IP here,
 		// dont convert to net.IP because we need only its string later
 		_, err := netip.ParseAddr(*s)
 		if err != nil {
@@ -109,8 +109,8 @@ func Main() {
 			os.Exit(line())
 		}
 	}
-	// n : username 
-	// p: password 
+	// n : username
+	// p: password
 	// ip : public ip
 	// *t : login type
 	ptl, err := portal.NewPortal(*n, *p, ip, portal.LoginType(*t))
@@ -125,7 +125,7 @@ func Main() {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	// input: 
+	// input:
 	// server IP
 	// challenge
 	err = ptl.Login(*s, challenge)

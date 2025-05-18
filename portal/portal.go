@@ -17,22 +17,22 @@ import (
 
 var (
 	// ErrIllegalIPv4 is returned when an invalid IPv4 address is provided
-	ErrIllegalIPv4                 = errors.New("illegal ipv4")
+	ErrIllegalIPv4 = errors.New("illegal ipv4")
 	// ErrIllegalLoginType is returned when an invalid login type is provided
-	ErrIllegalLoginType            = errors.New("illegal login type")
+	ErrIllegalLoginType = errors.New("illegal login type")
 	// ErrUnexpectedChallengeResponse is returned when challenge is shorter than expected
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
 	// ErrUnexpectedLoginResponse is returned when login resp is shorter than expected
-	ErrUnexpectedLoginResponse     = errors.New("unexpected login response")
+	ErrUnexpectedLoginResponse = errors.New("unexpected login response")
 )
 
 // Portal struct for login config
 type Portal struct {
-	name	string
-	pswd	string
-	ip		net.IP
-	domain	string
-	acid	string
+	name   string
+	pswd   string
+	ip     net.IP
+	domain string
+	acid   string
 }
 
 // LoginType defines known login types
@@ -92,11 +92,11 @@ func NewPortal(name, password string, ipv4 net.IP, loginType LoginType) (*Portal
 	logrus.Debugf("portal domain: %s, ac_id: %s", domain, acid)
 
 	return &Portal{
-		name:	name,
-		pswd:	password,
-		ip:		ipv4,
+		name:   name,
+		pswd:   password,
+		ip:     ipv4,
 		domain: domain,
-		acid:	acid,
+		acid:   acid,
 	}, nil
 }
 
@@ -106,14 +106,14 @@ func NewPortal(name, password string, ipv4 net.IP, loginType LoginType) (*Portal
 func (p *Portal) GetChallenge(sIP string) (string, error) {
 	// Note: no need to do URL encoding here
 	u, err := GetChallengeURL(
-		sIP, 
-		"gondportal", 
-		p.name, 
-		p.domain, 
-		p.ip, 
+		sIP,
+		"gondportal",
+		p.name,
+		p.domain,
+		p.ip,
 		time.Now().UnixMilli(),
 	)
-	
+
 	if err != nil {
 		return "", err
 	}
@@ -147,7 +147,7 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 }
 
 // Login sends login request to server
-// input: 
+// input:
 // server IP
 // challenge
 func (p *Portal) Login(sIP, challenge string) error {
@@ -159,15 +159,15 @@ func (p *Portal) Login(sIP, challenge string) error {
 	hmd5 := p.PasswordHMd5(challenge)
 	// Note: no need to do URL encoding here
 	u, err := GetLoginURL(
-		sIP, 
-		"gondportal", 
-		p.name, 
-		p.domain, 
-		hmd5, 
-		p.acid, 
-		p.ip, 
-		p.CheckSum(challenge, p.name, p.domain, hmd5, p.acid, p.ip, info), 
-		info, 
+		sIP,
+		"gondportal",
+		p.name,
+		p.domain,
+		hmd5,
+		p.acid,
+		p.ip,
+		p.CheckSum(challenge, p.name, p.domain, hmd5, p.acid, p.ip, info),
+		info,
 		time.Now().UnixMilli(),
 	)
 
