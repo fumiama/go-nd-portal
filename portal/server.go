@@ -4,30 +4,181 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"net"
+	"strings"
+
+	"github.com/google/go-querystring/query"
 
 	"github.com/fumiama/go-nd-portal/base64"
 	"github.com/fumiama/go-nd-portal/helper"
 )
 
 const (
-	PortalServerIP       = "10.253.0.237"
-	PortalDomain         = "@dx-uestc"
-	PortalDomainDX       = "@dx"
-	PortalGetChallenge   = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomain + "&ip=%v&_=%d"
-	PortalGetChallengeDX = "http://" + PortalServerIP + "/cgi-bin/get_challenge?callback=%s&username=%s" + PortalDomainDX + "&ip=%v&_=%d"
-	PortalLogin          = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomain + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
-	PortalLoginDX        = "http://" + PortalServerIP + "/cgi-bin/srun_portal?callback=%s&action=login&username=%s" + PortalDomainDX + "&password={MD5}%s&ac_id=1&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
+	// PortalServerIPQsh default Server IP String in Qsh work area
+	PortalServerIPQsh		= "10.253.0.237"
+	// PortalServerIPQshDorm default Server IP String in Qsh new dorm area
+	PortalServerIPQshDorm	= "10.253.0.235"
+
+	// PortalDomainQsh PortalDomain for qsh-edu login type
+	PortalDomainQsh			= "@dx-uestc"
+	// PortalDomainQshDX PortalDomain for qsh-dx, qshd-dx login types
+	PortalDomainQshDX		= "@dx"
+	// PortalDomainQshCMCC PortalDomain for qshd-cmcc login type
+	PortalDomainQshCMCC		= "@cmcc"
+
+	// PortalGetChallenge GetChallenge URL
+	PortalGetChallenge		= "http://%v/cgi-bin/get_challenge?%s"
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain 
+	// 5.client IP
+	// 6.timestamp
+	// PortalGetChallenge	= "http://%v/cgi-bin/get_challenge?callback=%s&username=%s%s&ip=%v&_=%d"
+
+	// AcIDQsh ACID for Qsh work area
+	AcIDQsh					= "1"
+	// AcIDQshDorm ACID for Qsh new dorm area
+	AcIDQshDorm				= "3"
+
+	// PortalCGI Auth CGI URL
+	PortalCGI				= "http://%v/cgi-bin/srun_portal?%s"
+	// qsh LoginURL key-value order
+	// 1.server IP 
+	// 2.callback 
+	// 3.username 4.PortalDomain 
+	// 5.encrypted password
+	// 6.ac_id: determined by login area
+	// 7.client IP
+	// 8.checksum
+	// 9.info
+	// 10.timestamp
+	// PortalLogin			= "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
 
+// GetChallengeReq struct for GetChallenge URL query
+type GetChallengeReq struct {
+	Callback	string	`url:"callback"`
+	Username	string	`url:"username"`
+	IP			string	`url:"ip"`
+	Timestamp	int64	`url:"_"`
+}
+
+// GetPortalReq struct for Portal Auth CGI URL query
+type GetPortalReq struct {
+	Callback			string	`url:"callback"`
+	Action				string	`url:"action"`
+	Username			string	`url:"username"`
+	EncryptedPassword	string	`url:"password"`
+	AcID				string	`url:"ac_id"`
+	IP					string	`url:"ip"`
+	Checksum			string	`url:"chksum"`
+	EncodedUserInfo		string	`url:"info"`
+	ConstantN			string	`url:"n"`
+	ConstantType		string	`url:"type"`
+	OS					string	`url:"os"`
+	Platform			string	`url:"name"`
+	DoubleStack			string	`url:"double_stack"`
+	Timestamp			int64	`url:"_"`
+}
+
+// GetChallengeURL generates the URL for getchallenge req
+func GetChallengeURL(
+	sIP,
+	callback, 
+	username, domain string,
+	cIP net.IP, 
+	timestamp int64) (string, error) {
+
+	v, err := query.Values(&GetChallengeReq{
+		Callback:	callback,
+		Username:	username + domain,
+		IP:			cIP.String(),
+		Timestamp:	timestamp,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(PortalGetChallenge, sIP, v.Encode()), nil
+}
+
+// GetLoginURL generates the URL for login req
+func GetLoginURL(
+	sIP,
+	callback, 
+	username, domain, 
+	md5Password,
+	acid string,
+	cIP net.IP,
+	chksum,
+	info string, 
+	timestamp int64) (string, error) {
+
+	v, err := query.Values(&GetPortalReq{
+		Callback:			callback,
+		Action:				"login",
+		Username:			username + domain,
+		EncryptedPassword:	"{MD5}" + md5Password,
+		AcID:				acid,
+		IP:					cIP.String(),
+		Checksum:			chksum,
+		EncodedUserInfo:	"{SRBX1}" + info,
+		ConstantN:			"200",
+		ConstantType:		"1",
+		OS:					"Windows 10",
+		Platform:			"Windows",
+		DoubleStack:		"0",
+		Timestamp:			timestamp,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(PortalCGI, sIP, v.Encode()), nil
+}
+
 const (
+	// PortalHeaderUA fake User-Agent
 	PortalHeaderUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.56"
 )
 
-const (
-	PortalUserInfo   = `{"username":"%s` + PortalDomain + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
-	PortalUserInfoDX = `{"username":"%s` + PortalDomainDX + `","password":"%s","ip":"%v","acid":"1","enc_ver":"srun_bx1"}`
-)
+// UserInfo struct for userinfo JSON required by server
+type UserInfo struct {
+	Username string `json:"username"` // = username + domain
+	Password string `json:"password"`
+	IP       string `json:"ip"`
+	AcID     string `json:"acid"`
+	EncVer   string `json:"enc_ver"`
+}
 
+// GetUserInfo serializes UserInfo JSON to string
+func GetUserInfo(
+	username, 
+	domain, 
+	password string, 
+	cIP net.IP, 
+	acid string) (string, error) {
+	
+	var b strings.Builder 
+	err := json.NewEncoder(&b).Encode(&UserInfo{
+		Username:	username + domain,
+		Password:	password,
+		IP:			cIP.String(),
+		AcID:		acid,
+		EncVer:		"srun_bx1",
+	})
+	if err != nil {
+		return "", err
+	}
+	
+	// Note: in case of unexpected error
+	// we have to remove "\n" at the tail to match actual JSON format
+	return strings.TrimSpace(b.String()), nil
+}
+
+// EncodeUserInfo encodes userinfo with challenge
 func EncodeUserInfo(info, challenge string) string {
 	if len(info) == 0 || len(challenge) == 0 || len(challenge)%4 != 0 {
 		return ""
@@ -80,18 +231,27 @@ func EncodeUserInfo(info, challenge string) string {
 	return base64.Base64Encoding.EncodeToString(lv)
 }
 
-func (p *Portal) CheckSum(domain, challenge, hmd5, info string) string {
+// CheckSum calculates chksum parameter for login
+func (p *Portal) CheckSum(
+	challenge, 
+	username, 
+	domain, 
+	hmd5, 
+	acid string, 
+	cIP net.IP, 
+	info string) string {
+
 	var buf [20]byte
 	h := sha1.New()
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.nam))
+	_, _ = h.Write(helper.StringToBytes(username))
 	_, _ = h.Write([]byte(domain))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write(helper.StringToBytes(hmd5))
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write([]byte("1")) // ac_id
+	_, _ = h.Write([]byte(acid)) // acid
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(p.ip.String()))
+	_, _ = h.Write(helper.StringToBytes(cIP.String()))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write([]byte("200")) // n
 	_, _ = h.Write(helper.StringToBytes(challenge))

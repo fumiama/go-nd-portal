@@ -51,7 +51,8 @@ func Main() {
 	h := flag.Bool("h", false, "display this help")
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
-	x := flag.Bool("x", false, "do dx login")
+	s := flag.String("s", portal.PortalServerIPQsh, "login host")
+	t := flag.String("t", "qsh-edu", "login type [qsh-edu | qsh-dx | qshd-dx | qshd-cmcc]")
 	flag.Parse()
 	if *h {
 		fmt.Println("Usage:")
@@ -98,27 +99,36 @@ func Main() {
 		*p = helper.BytesToString(data)
 		fmt.Println()
 	}
-	ptl, err := portal.NewPortal(*n, *p, ip)
+	logrus.Debugf("server addr: %s, login type: %s", *s, *t)
+	if *s != portal.PortalServerIPQsh {
+		// just validate IP here, 
+		// dont convert to net.IP because we need only its string later
+		_, err := netip.ParseAddr(*s)
+		if err != nil {
+			logrus.Errorln(err)
+			os.Exit(line())
+		}
+	}
+	// n : username 
+	// p: password 
+	// ip : public ip
+	// *t : login type
+	ptl, err := portal.NewPortal(*n, *p, ip, portal.LoginType(*t))
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	u := portal.PortalGetChallenge
-	if *x {
-		u = portal.PortalGetChallengeDX
-	}
-	challenge, err := ptl.GetChallenge(u)
+	// input:
+	// server IP
+	challenge, err := ptl.GetChallenge(*s)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
 	}
-	u = portal.PortalLogin
-	dm := portal.PortalDomain
-	if *x {
-		u = portal.PortalLoginDX
-		dm = portal.PortalDomainDX
-	}
-	err = ptl.Login(u, dm, challenge)
+	// input: 
+	// server IP
+	// challenge
+	err = ptl.Login(*s, challenge)
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())
