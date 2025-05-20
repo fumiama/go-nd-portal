@@ -26,7 +26,7 @@ func TestGetUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.ip, u.acid)
+	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.cip, u.acid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestEncodeUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.ip, u.acid)
+	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.cip, u.acid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestCheckSum(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.ip, u.acid)
+	info, err := GetUserInfo(u.name, u.domain, u.pswd, u.cip, u.acid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestCheckSum(t *testing.T) {
 		PortalDomainQsh,
 		u.PasswordHMd5(challenge),
 		u.acid,
-		u.ip,
+		u.cip,
 		EncodeUserInfo(
 			info,
 			challenge,

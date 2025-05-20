@@ -30,7 +30,7 @@ var (
 type Portal struct {
 	name   string
 	pswd   string
-	ip     net.IP
+	cip    net.IP
 	sip    string
 	domain string
 	acid   string
@@ -118,7 +118,7 @@ func NewPortal(name, password, sIP string, cIP net.IP, loginType LoginType) (*Po
 	return &Portal{
 		name:   name,
 		pswd:   password,
-		ip:     cIP,
+		cip:    cIP,
 		sip:    sIP,
 		domain: domain,
 		acid:   acid,
@@ -133,7 +133,7 @@ func (p *Portal) GetChallenge() (string, error) {
 		"gondportal",
 		p.name,
 		p.domain,
-		p.ip,
+		p.cip,
 		time.Now().UnixMilli(),
 	)
 
@@ -171,10 +171,9 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 
 // Login sends login request to server
 // input:
-// server IP
 // challenge
 func (p *Portal) Login(challenge string) error {
-	userInfo, err := GetUserInfo(p.name, p.domain, p.pswd, p.ip, p.acid)
+	userInfo, err := GetUserInfo(p.name, p.domain, p.pswd, p.cip, p.acid)
 	if err != nil {
 		return err
 	}
@@ -188,8 +187,8 @@ func (p *Portal) Login(challenge string) error {
 		p.domain,
 		hmd5,
 		p.acid,
-		p.ip,
-		p.CheckSum(challenge, p.name, p.domain, hmd5, p.acid, p.ip, info),
+		p.cip,
+		p.CheckSum(challenge, p.name, p.domain, hmd5, p.acid, p.cip, info),
 		info,
 		time.Now().UnixMilli(),
 	)
