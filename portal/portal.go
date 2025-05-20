@@ -31,6 +31,7 @@ type Portal struct {
 	name   string
 	pswd   string
 	ip     net.IP
+	sip    string
 	domain string
 	acid   string
 }
@@ -48,6 +49,21 @@ const (
 	// LoginTypeQshDormCMCC cmcc in Qsh new dorm area
 	LoginTypeQshDormCMCC LoginType = "qshd-cmcc"
 )
+
+// GetDefaultPortalServerIP returns default PortalServerIP by LoginType
+func (lt LoginType) GetDefaultPortalServerIP() (string, error) {
+	var sIP string
+	switch lt {
+	case LoginTypeQshEdu, LoginTypeQshDX:
+		sIP = PortalServerIPQsh
+	case LoginTypeQshDormDX, LoginTypeQshDormCMCC:
+		sIP = PortalServerIPQshDorm
+	default:
+		return "", ErrIllegalLoginType
+	}
+
+	return sIP, nil
+}
 
 // ToDomainAcID converts LoginType to domain and acid
 func (lt LoginType) ToDomainAcID() (string, string, error) {
@@ -80,8 +96,8 @@ type rsp struct {
 }
 
 // NewPortal creates a new Portal instance
-func NewPortal(name, password string, ipv4 net.IP, loginType LoginType) (*Portal, error) {
-	if len(ipv4) != 4 {
+func NewPortal(name, password, sIP string, cIP net.IP, loginType LoginType) (*Portal, error) {
+	if len(cIP) != 4 {
 		return nil, ErrIllegalIPv4
 	}
 
@@ -89,24 +105,31 @@ func NewPortal(name, password string, ipv4 net.IP, loginType LoginType) (*Portal
 	if err != nil {
 		return nil, err
 	}
-	logrus.Debugf("portal domain: %s, ac_id: %s", domain, acid)
+	logrus.Debugf("login type: %s, portal domain: %s, ac_id: %s", loginType, domain, acid)
+
+	if sIP == "" {
+		sIP, err = loginType.GetDefaultPortalServerIP()
+		if err != nil {
+			return nil, err
+		}
+	}
+	logrus.Debugf("server addr: %s", sIP)
 
 	return &Portal{
 		name:   name,
 		pswd:   password,
-		ip:     ipv4,
+		ip:     cIP,
+		sip:    sIP,
 		domain: domain,
 		acid:   acid,
 	}, nil
 }
 
 // GetChallenge gets token for encryption from server
-// input:
-// server IP
-func (p *Portal) GetChallenge(sIP string) (string, error) {
+func (p *Portal) GetChallenge() (string, error) {
 	// Note: no need to do URL encoding here
 	u, err := GetChallengeURL(
-		sIP,
+		p.sip,
 		"gondportal",
 		p.name,
 		p.domain,
@@ -150,7 +173,7 @@ func (p *Portal) PasswordHMd5(challenge string) string {
 // input:
 // server IP
 // challenge
-func (p *Portal) Login(sIP, challenge string) error {
+func (p *Portal) Login(challenge string) error {
 	userInfo, err := GetUserInfo(p.name, p.domain, p.pswd, p.ip, p.acid)
 	if err != nil {
 		return err
@@ -159,7 +182,7 @@ func (p *Portal) Login(sIP, challenge string) error {
 	hmd5 := p.PasswordHMd5(challenge)
 	// Note: no need to do URL encoding here
 	u, err := GetLoginURL(
-		sIP,
+		p.sip,
 		"gondportal",
 		p.name,
 		p.domain,
