@@ -4,7 +4,6 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"net"
 	"net/netip"
 	"os"
 	"runtime"
@@ -16,15 +15,6 @@ import (
 	"github.com/fumiama/go-nd-portal/helper"
 	"github.com/fumiama/go-nd-portal/portal"
 )
-
-func outip() (net.IP, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:53")
-	if err != nil {
-		return nil, err
-	}
-	_ = conn.Close()
-	return conn.LocalAddr().(*net.UDPAddr).IP.To4(), nil
-}
 
 func line() int {
 	_, _, fileLine, ok := runtime.Caller(1)
@@ -38,14 +28,7 @@ const query = "query"
 
 // Main cmd program
 func Main() {
-	ip, err := outip()
-	ipf := ""
-	if err != nil {
-		ipf = query
-	} else {
-		ipf = ip.String()
-	}
-	ips := flag.String("ip", ipf, "public IP")
+	ip := flag.String("ip", "", "client IP, auto get from login host when empty")
 	n := flag.String("n", query, "username")
 	p := flag.String("p", query, "password")
 	h := flag.Bool("h", false, "display this help")
@@ -64,26 +47,18 @@ func Main() {
 	} else if *w {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
-	if *ips == query {
-		fmt.Printf("ip: ")
-		_, err = fmt.Scanln(ips)
+	if *ip != "" {
+		// just validate IP here,
+		// dont convert to net.IP because we need only its string later
+		_, err := netip.ParseAddr(*ip)
 		if err != nil {
 			logrus.Errorln(err)
 			os.Exit(line())
 		}
-	}
-	if *ips != ip.String() {
-		ipaddr, err := netip.ParseAddr(*ips)
-		if err != nil {
-			logrus.Errorln(err)
-			os.Exit(line())
-		}
-		a4 := ipaddr.As4()
-		copy(ip, a4[:])
 	}
 	if *n == query {
 		fmt.Printf("username: ")
-		_, err = fmt.Scanln(n)
+		_, err := fmt.Scanln(n)
 		if err != nil {
 			logrus.Errorln(err)
 			os.Exit(line())
@@ -112,7 +87,7 @@ func Main() {
 	// p: password
 	// ip : public ip
 	// *t : login type
-	ptl, err := portal.NewPortal(*n, *p, *s, ip, portal.LoginType(*t))
+	ptl, err := portal.NewPortal(*n, *p, *s, *ip, portal.LoginType(*t))
 	if err != nil {
 		logrus.Errorln(err)
 		os.Exit(line())

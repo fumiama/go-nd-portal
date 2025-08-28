@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	// ErrIllegalIPv4 is returned when an invalid IPv4 address is provided
-	ErrIllegalIPv4 = errors.New("illegal ipv4")
 	// ErrIllegalLoginType is returned when an invalid login type is provided
 	ErrIllegalLoginType = errors.New("illegal login type")
 	// ErrUnexpectedChallengeResponse is returned when challenge is shorter than expected
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
+	// ErrCannotGetClientIPFromChanllengeResponse is returned when client_ip cant get from challenge with cip not specified
+	ErrCannotGetClientIPFromChanllengeResponse = errors.New("cannot get client ip from challenge response")
 	// ErrUnexpectedLoginResponse is returned when login resp is shorter than expected
 	ErrUnexpectedLoginResponse = errors.New("unexpected login response")
 )
@@ -30,7 +30,7 @@ var (
 type Portal struct {
 	name   string
 	pswd   string
-	cip    net.IP
+	cip    string
 	sip    string
 	domain string
 	acid   string
@@ -91,16 +91,13 @@ func (lt LoginType) ToDomainAcID() (string, string, error) {
 
 // rsp struct for converting from raw response data to JSON
 type rsp struct {
+	ClientIP  string `json:"client_ip"`
 	Challenge string `json:"challenge"`
 	Error     string `json:"error"`
 }
 
 // NewPortal creates a new Portal instance
-func NewPortal(name, password, sIP string, cIP net.IP, loginType LoginType) (*Portal, error) {
-	if len(cIP) != 4 {
-		return nil, ErrIllegalIPv4
-	}
-
+func NewPortal(name, password, sIP string, cIP string, loginType LoginType) (*Portal, error) {
 	domain, acid, err := loginType.ToDomainAcID()
 	if err != nil {
 		return nil, err
@@ -156,6 +153,15 @@ func (p *Portal) GetChallenge() (string, error) {
 	}
 	if r.Error != "ok" {
 		return "", errors.New(r.Error)
+	}
+	// if cip was left empty, try get from challenge resp
+	if p.cip == "" {
+		_, err = netip.ParseAddr(r.ClientIP)
+		if err != nil {
+			return "", ErrCannotGetClientIPFromChanllengeResponse
+		}
+		p.cip = r.ClientIP
+		logrus.Debugln("get client ip from challenge resp:", r.ClientIP)
 	}
 	logrus.Debugln("get challenge:", r.Challenge)
 	return r.Challenge, nil
