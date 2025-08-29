@@ -21,8 +21,8 @@ var (
 	ErrIllegalLoginType = errors.New("illegal login type")
 	// ErrUnexpectedChallengeResponse is returned when challenge is shorter than expected
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
-	// ErrCannotGetClientIPFromChallengeResponse is returned when client_ip cant get from challenge with cip not specified
-	ErrCannotGetClientIPFromChallengeResponse = errors.New("cannot get client ip from challenge response")
+	// ErrCannotDetermineClientIP is returned when client IP cant get from challenge or local resolution with cip not specified
+	ErrCannotDetermineClientIP = errors.New("failed to determine client IP from challenge response or local resolution")
 	// ErrUnexpectedLoginResponse is returned when login resp is shorter than expected
 	ErrUnexpectedLoginResponse = errors.New("unexpected login response")
 )
@@ -168,12 +168,19 @@ func (p *Portal) GetChallenge() (string, error) {
 	}
 	// if cip was left empty, try get from challenge resp
 	if p.cip == "" {
+		logrus.Debugln("client ip is not specified, try get client ip from challenge resp")
 		_, err = netip.ParseAddr(r.ClientIP)
-		if err != nil {
-			return "", ErrCannotGetClientIPFromChallengeResponse
+		if err == nil {
+			p.cip = r.ClientIP
+			logrus.Debugln("get client ip from challenge resp:", r.ClientIP)
+		} else {
+			// if ClientIP is invalid, try resolve it locally
+			p.cip, err = ResolveLocalClientIP()
+			if err != nil {
+				return "", ErrCannotDetermineClientIP
+			}
+			logrus.Debugln("failed to get client ip from challenge resp, using locally resolved ip:", p.cip)
 		}
-		p.cip = r.ClientIP
-		logrus.Debugln("get client ip from challenge resp:", r.ClientIP)
 	}
 	logrus.Debugln("get challenge:", r.Challenge)
 	return r.Challenge, nil
@@ -229,6 +236,11 @@ func (p *Portal) Login(challenge string) error {
 		return err
 	}
 	logrus.Debugln("login rsp:", &r)
+	// compare local cip with response client_ip
+	if p.cip != r.ClientIP {
+		logrus.Warnln("client ip in login request does not match response! unexpected errors may occur")
+		logrus.Warnf("request: %s, response: %s", p.cip, r.ClientIP)
+	}
 	if r.Error != "ok" {
 		return errors.New(r.Error)
 	}
