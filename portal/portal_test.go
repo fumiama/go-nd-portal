@@ -14,3 +14,11 @@ func TestAutoSelectServerIP(t *testing.T) {
 	t.Log(u.sip)
 	assert.Equal(t, PortalServerIPQsh, u.sip)
 }
+
+func TestResolveLocalClientIP(t *testing.T) {
+	cip, err := ResolveLocalClientIP()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(cip)
+}

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/netip"
 	"time"
 
@@ -87,6 +88,17 @@ func (lt LoginType) ToDomainAcID() (string, string, error) {
 	}
 
 	return domain, acid, nil
+}
+
+// ResolveLocalClientIP resolves Client IP locally
+func ResolveLocalClientIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:53")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	return conn.LocalAddr().(*net.UDPAddr).IP.String(), nil
 }
 
 // rsp struct for converting from raw response data to JSON
