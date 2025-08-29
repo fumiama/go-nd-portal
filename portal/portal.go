@@ -20,8 +20,8 @@ var (
 	ErrIllegalLoginType = errors.New("illegal login type")
 	// ErrUnexpectedChallengeResponse is returned when challenge is shorter than expected
 	ErrUnexpectedChallengeResponse = errors.New("unexpected challenge response")
-	// ErrCannotGetClientIPFromChanllengeResponse is returned when client_ip cant get from challenge with cip not specified
-	ErrCannotGetClientIPFromChanllengeResponse = errors.New("cannot get client ip from challenge response")
+	// ErrCannotGetClientIPFromChallengeResponse is returned when client_ip cant get from challenge with cip not specified
+	ErrCannotGetClientIPFromChallengeResponse = errors.New("cannot get client ip from challenge response")
 	// ErrUnexpectedLoginResponse is returned when login resp is shorter than expected
 	ErrUnexpectedLoginResponse = errors.New("unexpected login response")
 )
@@ -158,7 +158,7 @@ func (p *Portal) GetChallenge() (string, error) {
 	if p.cip == "" {
 		_, err = netip.ParseAddr(r.ClientIP)
 		if err != nil {
-			return "", ErrCannotGetClientIPFromChanllengeResponse
+			return "", ErrCannotGetClientIPFromChallengeResponse
 		}
 		p.cip = r.ClientIP
 		logrus.Debugln("get client ip from challenge resp:", r.ClientIP)
