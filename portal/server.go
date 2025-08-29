@@ -86,7 +86,7 @@ type GetPortalReq struct {
 func GetChallengeURL(
 	sIP,
 	callback,
-	username, domain string,
+	username, domain,
 	cIP string,
 	timestamp int64) (string, error) {
 	v, err := query.Values(&GetChallengeReq{
@@ -108,8 +108,8 @@ func GetLoginURL(
 	callback,
 	username, domain,
 	md5Password,
-	acid string,
-	cIP string,
+	acid,
+	cIP,
 	chksum,
 	info string,
 	timestamp int64) (string, error) {
@@ -154,8 +154,8 @@ type UserInfo struct {
 func GetUserInfo(
 	username,
 	domain,
-	password string,
-	cIP string,
+	password,
+	cIP,
 	acid string) (string, error) {
 	var b strings.Builder
 	err := json.NewEncoder(&b).Encode(&UserInfo{
@@ -233,8 +233,8 @@ func (p *Portal) CheckSum(
 	username,
 	domain,
 	hmd5,
-	acid string,
-	cIP string,
+	acid,
+	cIP,
 	info string) string {
 	var buf [20]byte
 	h := sha1.New()
