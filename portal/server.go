@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net"
 	"strings"
 
 	"github.com/google/go-querystring/query"
@@ -87,13 +86,13 @@ type GetPortalReq struct {
 func GetChallengeURL(
 	sIP,
 	callback,
-	username, domain string,
-	cIP net.IP,
+	username, domain,
+	cIP string,
 	timestamp int64) (string, error) {
 	v, err := query.Values(&GetChallengeReq{
 		Callback:  callback,
 		Username:  username + domain,
-		IP:        cIP.String(),
+		IP:        cIP,
 		Timestamp: timestamp,
 	})
 	if err != nil {
@@ -109,8 +108,8 @@ func GetLoginURL(
 	callback,
 	username, domain,
 	md5Password,
-	acid string,
-	cIP net.IP,
+	acid,
+	cIP,
 	chksum,
 	info string,
 	timestamp int64) (string, error) {
@@ -120,7 +119,7 @@ func GetLoginURL(
 		Username:          username + domain,
 		EncryptedPassword: "{MD5}" + md5Password,
 		AcID:              acid,
-		IP:                cIP.String(),
+		IP:                cIP,
 		Checksum:          chksum,
 		EncodedUserInfo:   "{SRBX1}" + info,
 		ConstantN:         "200",
@@ -155,14 +154,14 @@ type UserInfo struct {
 func GetUserInfo(
 	username,
 	domain,
-	password string,
-	cIP net.IP,
+	password,
+	cIP,
 	acid string) (string, error) {
 	var b strings.Builder
 	err := json.NewEncoder(&b).Encode(&UserInfo{
 		Username: username + domain,
 		Password: password,
-		IP:       cIP.String(),
+		IP:       cIP,
 		AcID:     acid,
 		EncVer:   "srun_bx1",
 	})
@@ -234,8 +233,8 @@ func (p *Portal) CheckSum(
 	username,
 	domain,
 	hmd5,
-	acid string,
-	cIP net.IP,
+	acid,
+	cIP,
 	info string) string {
 	var buf [20]byte
 	h := sha1.New()
@@ -247,7 +246,7 @@ func (p *Portal) CheckSum(
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write([]byte(acid)) // acid
 	_, _ = h.Write(helper.StringToBytes(challenge))
-	_, _ = h.Write(helper.StringToBytes(cIP.String()))
+	_, _ = h.Write(helper.StringToBytes(cIP))
 	_, _ = h.Write(helper.StringToBytes(challenge))
 	_, _ = h.Write([]byte("200")) // n
 	_, _ = h.Write(helper.StringToBytes(challenge))
