@@ -21,16 +21,19 @@ $ go install github.com/fumiama/go-nd-portal@latest
  * `-ip`: 本机公网出口，可自定义
 
  * `-t`: 登录类型（`qsh-edu`），可指定为:
-    * 清水河，教学办公区: 
-      * `qsh-edu`,   教育网  
-      * `qsh-dx`,    电信  
-    * 清水河，新建宿舍区: 
-      * `qshd-dx`,   电信  
-      * `qshd-cmcc`, 移动  
-
+    * 清水河，教学办公区:
+      * `qsh-edu`,   教育网
+      * `qsh-dx`,    电信
+    * 清水河，新建宿舍区:
+      * `qshd-dx`,   电信
+      * `qshd-cmcc`, 移动
+    * 沙河:
+      * `sh-edu`,    教育网
+      * `sh-dx`,     电信
+      * `sh-cmcc`,   移动
  * `-s`: 服务器地址（根据上述登录类型自动选择），可自定义
 
 
 ## 效果
 
-<img alt="screenshot" src="https://github.com/user-attachments/assets/1e4a7f0b-d9c5-4b4e-a5f7-a2f39f7ca3a3">
+<img src="https://github.com/user-attachments/assets/56647073-215a-43e9-8828-c70cbe06e6ad" />
