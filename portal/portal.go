@@ -49,16 +49,27 @@ const (
 	LoginTypeQshDormDX LoginType = "qshd-dx"
 	// LoginTypeQshDormCMCC cmcc in Qsh new dorm area
 	LoginTypeQshDormCMCC LoginType = "qshd-cmcc"
+	// LoginTypeShEdu edu in Sh
+	LoginTypeShEdu LoginType = "sh-edu"
+	// LoginTypeShDX dx in Sh
+	LoginTypeShDX LoginType = "sh-dx"
+	// LoginTypeShCMCC cmcc in Sh
+	LoginTypeShCMCC LoginType = "sh-cmcc"
 )
 
 // GetDefaultPortalServerIP returns default PortalServerIP by LoginType
 func (lt LoginType) GetDefaultPortalServerIP() (string, error) {
 	var sIP string
 	switch lt {
+	// Qsh work area
 	case LoginTypeQshEdu, LoginTypeQshDX:
 		sIP = PortalServerIPQsh
+	// Qsh new dorm area
 	case LoginTypeQshDormDX, LoginTypeQshDormCMCC:
 		sIP = PortalServerIPQshDorm
+	// Sh
+	case LoginTypeShEdu, LoginTypeShDX, LoginTypeShCMCC:
+		sIP = PortalServerIPSh
 	default:
 		return "", ErrIllegalLoginType
 	}
@@ -70,6 +81,7 @@ func (lt LoginType) GetDefaultPortalServerIP() (string, error) {
 func (lt LoginType) ToDomainAcID() (string, string, error) {
 	var domain, acid string
 	switch lt {
+	// Qsh work area
 	case LoginTypeQshEdu:
 		// qsh-edu is assumed that cant login from dorm
 		domain = PortalDomainQsh
@@ -77,12 +89,23 @@ func (lt LoginType) ToDomainAcID() (string, string, error) {
 	case LoginTypeQshDX:
 		domain = PortalDomainQshDX
 		acid = AcIDQsh
+	// Qsh new dorm area
 	case LoginTypeQshDormDX:
 		domain = PortalDomainQshDX
 		acid = AcIDQshDorm
 	case LoginTypeQshDormCMCC:
 		domain = PortalDomainQshCMCC
 		acid = AcIDQshDorm
+	// Sh
+	case LoginTypeShEdu:
+		domain = PortalDomainSh
+		acid = AcIDSh
+	case LoginTypeShDX:
+		domain = PortalDomainShDX
+		acid = AcIDSh
+	case LoginTypeShCMCC:
+		domain = PortalDomainShCMCC
+		acid = AcIDSh
 	default:
 		return "", "", ErrIllegalLoginType
 	}

@@ -35,7 +35,7 @@ func Main() {
 	w := flag.Bool("w", false, "only display warn-or-higher-level log")
 	d := flag.Bool("d", false, "display debug-level log")
 	s := flag.String("s", "", "login host, auto select when empty")
-	t := flag.String("t", "qsh-edu", "login type [qsh-edu | qsh-dx | qshd-dx | qshd-cmcc]")
+	t := flag.String("t", "qsh-edu", "login type, \n {qsh-edu | qsh-dx | qshd-dx | qshd-cmcc | sh-edu | sh-dx | sh-cmcc}")
 	flag.Parse()
 	if *h {
 		fmt.Println("Usage:")
