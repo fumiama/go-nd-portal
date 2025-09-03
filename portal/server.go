@@ -19,6 +19,8 @@ const (
 	PortalServerIPQsh = "10.253.0.237"
 	// PortalServerIPQshDorm default Server IP String in Qsh new dorm area
 	PortalServerIPQshDorm = "10.253.0.235"
+	// PortalServerIPSh default Server IP String in Sh
+	PortalServerIPSh = "192.168.9.8"
 
 	// PortalDomainQsh PortalDomain for qsh-edu login type
 	PortalDomainQsh = "@dx-uestc"
@@ -26,6 +28,12 @@ const (
 	PortalDomainQshDX = "@dx"
 	// PortalDomainQshCMCC PortalDomain for qshd-cmcc login type
 	PortalDomainQshCMCC = "@cmcc"
+	// PortalDomainSh PortalDomain for sh-edu login type
+	PortalDomainSh = "@uestc"
+	// PortalDomainShDX PortalDomain for sh-dx login type
+	PortalDomainShDX = "@dx"
+	// PortalDomainShCMCC PortalDomain for sh-cmcc login type
+	PortalDomainShCMCC = "@cmccgx"
 
 	// PortalGetChallenge GetChallenge URL
 	PortalGetChallenge = "http://%v/cgi-bin/get_challenge?%s"
@@ -40,6 +48,8 @@ const (
 	AcIDQsh = "1"
 	// AcIDQshDorm ACID for Qsh new dorm area
 	AcIDQshDorm = "3"
+	// AcIDSh ACID for Sh
+	AcIDSh = "6"
 
 	// PortalCGI Auth CGI URL
 	PortalCGI = "http://%v/cgi-bin/srun_portal?%s"

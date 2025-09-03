@@ -11,8 +11,22 @@ func TestAutoSelectServerIP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(u.sip)
+	t.Log(LoginTypeQshEdu, u.sip)
 	assert.Equal(t, PortalServerIPQsh, u.sip)
+
+	u, err = NewPortal("2000010101001", "12345678", "", "1.2.3.4", LoginTypeQshDormDX)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(LoginTypeQshDormDX, u.sip)
+	assert.Equal(t, PortalServerIPQshDorm, u.sip)
+
+	u, err = NewPortal("2000010101001", "12345678", "", "1.2.3.4", LoginTypeShEdu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(LoginTypeShEdu, u.sip)
+	assert.Equal(t, PortalServerIPSh, u.sip)
 }
 
 func TestResolveLocalClientIP(t *testing.T) {
