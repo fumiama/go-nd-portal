@@ -66,6 +66,11 @@ const (
 	// PortalLogin			= "http://%v/cgi-bin/srun_portal?callback=%s&action=login&username=%s%s&password={MD5}%s&ac_id=%s&ip=%v&chksum=%s&info={SRBX1}%s&n=200&type=1&os=Windows+10&name=Windows&double_stack=0&_=%d"
 )
 
+const (
+	// PortalHeaderUA fake User-Agent
+	PortalHeaderUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
+)
+
 // GetChallengeReq struct for GetChallenge URL query
 type GetChallengeReq struct {
 	Callback  string `url:"callback"`
@@ -145,11 +150,6 @@ func GetLoginURL(
 
 	return fmt.Sprintf(PortalCGI, sIP, v.Encode()), nil
 }
-
-const (
-	// PortalHeaderUA fake User-Agent
-	PortalHeaderUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.56"
-)
 
 // UserInfo struct for userinfo JSON required by server
 type UserInfo struct {
