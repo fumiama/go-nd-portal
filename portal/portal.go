@@ -124,11 +124,42 @@ func ResolveLocalClientIP() (string, error) {
 	return conn.LocalAddr().(*net.UDPAddr).IP.String(), nil
 }
 
-// rsp struct for converting from raw response data to JSON
-type rsp struct {
-	ClientIP  string `json:"client_ip"`
-	Challenge string `json:"challenge"`
-	Error     string `json:"error"`
+// CommonRsp struct for login session specific response
+type CommonRsp struct {
+	// return code and various messages
+	// trash, but we have to add it
+	Error      string `json:"error"`
+	ErrorMsg   string `json:"error_msg"`
+	PloyMsg    string `json:"ploy_msg"`
+	SuccessMsg string `json:"suc_msg"`
+
+	// client_ip
+	ClientIP   string `json:"client_ip"`
+	// online_ip
+	OnlineIP   string `json:"online_ip"`
+	// challenge
+	Challenge  string `json:"challenge"`
+}
+
+// ResolveCommonRspResult resolves error message for response
+func (cr CommonRsp) ResolveCommonRspResult() error {
+	if cr.Error == "ok" {
+		// if suc_msg is not login_ok, warn
+		if cr.SuccessMsg != "" && cr.SuccessMsg != "login_ok" {
+			logrus.Warnln(cr.SuccessMsg)
+		}
+		return nil
+	}
+
+	// handle error msg and code based on priority
+	if cr.PloyMsg != "" {
+		return errors.New(cr.PloyMsg)
+	}
+	if cr.ErrorMsg != "" {
+		return errors.New(cr.ErrorMsg)
+	}
+
+	return errors.New(cr.Error)
 }
 
 // NewPortal creates a new Portal instance
@@ -181,13 +212,14 @@ func (p *Portal) GetChallenge() (string, error) {
 	if len(data) < 12 {
 		return "", ErrUnexpectedChallengeResponse
 	}
-	var r rsp
+	var r CommonRsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
 	if err != nil {
 		return "", err
 	}
-	if r.Error != "ok" {
-		return "", errors.New(r.Error)
+	err = r.ResolveCommonRspResult()
+	if err != nil {
+		return "", err
 	}
 	// if cip was left empty, try get from challenge resp
 	if p.cip == "" {
@@ -253,19 +285,21 @@ func (p *Portal) Login(challenge string) error {
 	if len(data) < 12 {
 		return ErrUnexpectedLoginResponse
 	}
-	var r rsp
+
+	var r CommonRsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
 	if err != nil {
 		return err
 	}
-	logrus.Debugln("login rsp:", &r)
+
 	// compare local cip with response client_ip
 	if p.cip != r.ClientIP {
 		logrus.Warnln("client ip in login request does not match response! unexpected errors may occur")
 		logrus.Warnf("request: %s, response: %s", p.cip, r.ClientIP)
 	}
-	if r.Error != "ok" {
-		return errors.New(r.Error)
+	err = r.ResolveCommonRspResult()
+	if err != nil {
+		return err
 	}
 	return nil
 }
