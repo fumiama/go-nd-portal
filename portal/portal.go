@@ -124,8 +124,8 @@ func ResolveLocalClientIP() (string, error) {
 	return conn.LocalAddr().(*net.UDPAddr).IP.String(), nil
 }
 
-// CommonRsp struct for login session specific response
-type CommonRsp struct {
+// commonRsp struct for login session specific response
+type commonRsp struct {
 	// return code and various messages
 	// trash, but we have to add it
 	Status     string `json:"error"`
@@ -141,8 +141,8 @@ type CommonRsp struct {
 	Challenge  string `json:"challenge"`
 }
 
-// Error implements the error interface for CommonRsp
-func (cr *CommonRsp) Error() string {
+// Error implements the error interface for commonRsp
+func (cr *commonRsp) Error() string {
 	// handle error msg and code based on priority
 	if cr.PloyMsg != "" {
 		return cr.PloyMsg
@@ -158,7 +158,7 @@ func (cr *CommonRsp) Error() string {
 }
 
 // Err checks if the response indicates an error
-func (cr *CommonRsp) Err() error {
+func (cr *commonRsp) Err() error {
 	if cr.Status == "ok" {
 		// if suc_msg is not login_ok, warn
 		if cr.SuccessMsg != "" && cr.SuccessMsg != "login_ok" {
@@ -221,7 +221,7 @@ func (p *Portal) GetChallenge() (string, error) {
 		return "", ErrUnexpectedChallengeResponse
 	}
 
-	var r CommonRsp
+	var r commonRsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
 	if err != nil {
 		return "", err
@@ -297,7 +297,7 @@ func (p *Portal) Login(challenge string) error {
 		return ErrUnexpectedLoginResponse
 	}
 
-	var r CommonRsp
+	var r commonRsp
 	err = json.Unmarshal(data[11:len(data)-1], &r)
 	if err != nil {
 		return err
