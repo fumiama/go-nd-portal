@@ -158,7 +158,7 @@ func (cr *commonRsp) Err() error {
 	if cr.Status == "ok" {
 		// if suc_msg is not login_ok, warn
 		if cr.SuccessMsg != "" && cr.SuccessMsg != "login_ok" {
-			logrus.Warnln(cr.SuccessMsg)
+			logrus.Warnln("server response:", cr.SuccessMsg)
 		}
 		return nil
 	}
