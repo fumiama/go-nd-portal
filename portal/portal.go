@@ -150,11 +150,7 @@ func (cr *commonRsp) Error() string {
 	if cr.ErrorMsg != "" {
 		return cr.ErrorMsg
 	}
-	if cr.Status != "" && cr.Status != "ok" {
-		return cr.Status
-	}
-	// fallback
-	return "unknown portal response error"
+	return cr.Status
 }
 
 // Err checks if the response indicates an error
