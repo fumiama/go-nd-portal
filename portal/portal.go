@@ -153,8 +153,8 @@ func (cr *commonRsp) Error() string {
 	return cr.Status
 }
 
-// Err checks if the response indicates an error
-func (cr *commonRsp) Err() error {
+// err checks if the response indicates an error
+func (cr *commonRsp) err() error {
 	if cr.Status == "ok" {
 		// if suc_msg is not login_ok, warn
 		if cr.SuccessMsg != "" && cr.SuccessMsg != "login_ok" {
@@ -222,7 +222,7 @@ func (p *Portal) GetChallenge() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = r.Err()
+	err = r.err()
 	// rsp message handling
 	if err != nil {
 		return "", err
@@ -305,5 +305,5 @@ func (p *Portal) Login(challenge string) error {
 		logrus.Warnf("request: %s, response: %s", p.cip, r.ClientIP)
 	}
 
-	return r.Err()
+	return r.err()
 }
